@@ -1,83 +1,83 @@
-# 舌康记 · Tongue Demo
+# TongueCare · Tongue Demo
 
-面向患者的舌象日常记录 App **普通版 UI 交互原型**。
+An interactive **Basic-edition UI prototype** for a patient-facing tongue photo and daily health journal app.
 
-本项目用于课程设计与产品展示，重点是界面设计、页面结构和用户操作流程。当前通过响应式网页呈现手机 App 界面，无需模型训练、医学数据集或后端数据库。
+This course project focuses on interface design, page structure, and user flows. It presents a mobile app through a responsive website. No model training, medical dataset, or backend database is required.
 
-## 预览
+## Preview
 
-[打开在线演示](https://shekang-daily.yuanbaiiscool.chatgpt.site)
+[Open the online demo](https://shekang-daily.yuanbaiiscool.chatgpt.site)
 
-在线演示目前仅项目所有者可访问。其他同学或老师可以按下方步骤在本地运行；GitHub 仓库的公开状态不会改变演示站点的访问权限。
+The hosted demo currently allows access only to the project owner. Classmates and instructors can run it locally using the instructions below. A public GitHub repository does not change the demo site's access permissions.
 
-## 已实现的页面
+## Implemented screens
 
-| 页面 | 内容与交互 |
+| Screen | Features |
 | --- | --- |
-| 首页 | 今日记录入口、一周记录状态、最近记录、拍摄小课堂 |
-| 拍摄记录 | 模拟拍摄、选择本地图片、重新选择照片、填写身体感受及备注、保存反馈 |
-| 健康档案 | 历史记录列表、记录次数、单次记录详情及图片预览 |
-| 我的 | 普通版身份、健康档案入口、提醒演示开关、隐私与帮助说明 |
+| Home | Daily check-in, weekly activity, latest entry, and photo tips |
+| Capture | Simulated capture, local image selection, photo replacement, feelings and notes, and save confirmation |
+| Journal | Entry history, entry count, details, and photo previews |
+| Profile | Basic membership, journal shortcut, reminder demo switch, privacy information, and help |
 
-界面以医疗青绿色为主色，配合圆角卡片、底部导航和手机布局；在电脑上以手机预览形式展示，在小屏设备上适配屏幕宽度。
+The interface uses a teal palette, rounded cards, and bottom navigation. Desktop browsers display a phone-shaped preview; smaller screens use the available width. All interface text and example entries are in English.
 
-### 推荐演示流程
+### Suggested demo flow
 
-1. 在首页点击「开始今日记录」。
-2. 点击「体验拍摄流程」，或通过「从相册选择」选择本地图片。
-3. 选择身体感受，可选填睡眠、饮食等备注。
-4. 点击「保存本次记录」，查看保存成功提示。
-5. 进入「健康档案」，点击刚保存的记录查看详情。
-6. 切换到「我的」，查看普通版权益及其他功能说明。
+1. Select **Start today’s check-in** on Home.
+2. Select **Try a demo capture**, or **Choose a photo** to pick a local image.
+3. Choose how you feel and optionally add notes about sleep, meals, or your day.
+4. Select **Save entry** and review the confirmation.
+5. Open **Journal**, then select the new entry to view its details.
+6. Open **Profile** to explore the Basic plan and feature information.
 
-## 演示范围
+## Demo scope
 
-- **拍摄是模拟流程**，不调用真实摄像头；相册入口支持选择本地图片，单张上限为 10 MB。
-- 照片通过浏览器 FileReader 在当前页面内预览，不上传服务器。
-- 新增记录仅保存在当前页面的 React 状态中，刷新页面后会重置。
-- 初始历史记录、首页日期和日历状态为演示数据，不代表真实用户健康信息。
-- 提醒开关只展示交互状态，不发送系统通知。
-- 不包含真实账号登录、在线支付、自动舌诊、模型训练、医疗报告生成或医院电子病历接入。
-- VIP 与医院关联目前仅提供权益说明入口，不会发生开通、扣费或数据共享。
+- Capture is simulated and does not access a real camera. Local image selection supports files smaller than 10 MB.
+- Images are previewed with the browser's FileReader API and are not uploaded to a server.
+- New entries exist only in the current page's React state and reset on refresh.
+- Initial entries, the homepage date, and calendar states are demonstration data, not real patient information.
+- The reminder switch demonstrates a setting; it does not send notifications.
+- There is no real account login, payment processing, automated tongue diagnosis, model training, medical report generation, or electronic medical record integration.
+- VIP and hospital linking currently display benefit information only. They do not activate memberships, charge users, or share data.
 
-## 产品后续规划
+## Planned product scope
 
-以下为产品构思，**尚未实现**：
+The following are product concepts and **are not implemented**:
 
-| 用户类型 | 规划权益 |
+| User type | Planned benefits |
 | --- | --- |
-| 普通用户 | 免费进行日常记录、查看历史档案 |
-| 付费 VIP | 多次记录对比、变化趋势、完整报告与导出 |
-| 医院疗程用户 | 通过医院邀请关联疗程，疗程内免费使用完整权益；授权后向关联医生共享记录 |
-| 医生 | 从电子病历入口查看患者居家上传情况，管理疗程及邀请 |
+| Basic | Free daily check-ins and entry history |
+| Paid VIP | Entry comparisons, trends, full reports, and exports |
+| Hospital care plan | Hospital invitation, full access during treatment, and sharing with a linked doctor after patient consent |
+| Doctor | Review home uploads through an electronic medical record entry point; manage care plans and invitations |
 
-医院疗程权益到期后，可回到普通版或自主选择购买 VIP。付费 VIP 与医院诊疗关系分别管理。
+After hospital-sponsored access ends, users may return to Basic or choose to purchase VIP. Paid membership and hospital care relationships are managed separately.
 
-## 技术栈
+## Technology
 
-- React 19、TypeScript
-- Vinext + Vite 8（App Router 结构）
+- React 19 and TypeScript
+- Vinext and Vite 8 with an App Router structure
 - Tailwind CSS 4
-- shadcn / Base UI 交互组件
-- Lucide React 图标
-- Cloudflare Workers 与 Sites 构建、托管配置
+- shadcn / Base UI components
+- Lucide React icons
+- Cloudflare Workers and Sites build and hosting configuration
 
-当前业务交互在浏览器内完成，仓库中的 Workers 配置用于开发及托管运行。
+Business interactions currently run in the browser. The Workers configuration supports local development and hosting.
 
-## 本地运行
+## Run locally
 
-### 环境要求
+### Requirements
 
-- Node.js **22.13.0 或以上**，建议使用 Node.js 24 LTS。
-- pnpm **11**。
+- Node.js **22.13.0 or later**; Node.js 24 is suitable.
+- pnpm **11**.
 
-如果尚未安装 pnpm，可以使用已有的 npm 安装：
+If pnpm is not installed, use npm:
 
 ```bash
 npm install -g pnpm@11.19.0
 ```
 
-### 安装与启动
+### Install and start
 
 ```bash
 git clone https://github.com/Gavinbb0/Tongue_demo.git
@@ -86,53 +86,53 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-打开终端打印的 Local 地址，通常为 `http://localhost:3000/`。端口被占用时，以实际输出为准。
+Open the Local URL printed by the terminal, usually `http://localhost:3000/`. Use the actual printed address if the default port is occupied.
 
-依赖安装需要网络。无需配置 API Key、数据库或真实病人数据。`pnpm-workspace.yaml` 显式允许 esbuild、sharp 和 workerd 执行依赖构建脚本。
+Dependency installation requires a network connection. No API key, database, or patient data is needed. `pnpm-workspace.yaml` explicitly allows dependency build scripts for esbuild, sharp, and workerd.
 
-### 构建与检查
+### Build and check
 
 ```bash
-# TypeScript 类型检查
+# Check TypeScript types
 pnpm exec tsc --noEmit
 
-# 生成生产构建
+# Create the production build
 pnpm build
 
-# 在本地预览 Workers 生产构建（需先 build）
+# Preview the Workers production build locally (run build first)
 pnpm start
 ```
 
-仓库还提供 `pnpm lint` 和 `pnpm format`，分别用于代码检查和格式化。`pnpm format` 会修改文件。
+The repository also provides `pnpm lint` and `pnpm format`. The format command modifies files.
 
-## 目录结构
+## Project structure
 
 ```text
 Tongue_demo/
 ├── app/
-│   ├── page.tsx            # 四个主页面、记录状态与弹窗交互
-│   ├── globals.css         # 主题、手机布局和响应式样式
-│   └── layout.tsx          # 中文语言、页面标题和全局布局
-├── components/ui/         # 随脚手架提供的 UI 组件
-├── hooks/                 # 通用 Hook
-├── lib/                   # 通用样式工具
-├── public/favicon.svg     # 应用图标
-├── .openai/hosting.json    # 当前 Sites 项目的托管标识与绑定配置
-├── vite.config.ts         # Vinext、Sites 和 Cloudflare 配置
-├── package.json           # 依赖与运行命令
-├── pnpm-lock.yaml         # 锁定依赖版本
-└── pnpm-workspace.yaml    # 依赖构建配置
+│   ├── page.tsx            # Main screens, entry state, and dialogs
+│   ├── globals.css         # Theme, mobile layout, and responsive styles
+│   └── layout.tsx          # English locale, metadata, and root layout
+├── components/ui/         # UI components included with the starter
+├── hooks/                 # Shared hooks
+├── lib/                   # Styling utilities
+├── public/favicon.svg     # App icon
+├── .openai/hosting.json    # Current Sites project and binding configuration
+├── vite.config.ts         # Vinext, Sites, and Cloudflare configuration
+├── package.json           # Dependencies and scripts
+├── pnpm-lock.yaml         # Locked dependency versions
+└── pnpm-workspace.yaml    # Dependency build configuration
 ```
 
-## 常见修改位置
+## Customization
 
-- **更改 App 名称或页面标题**：`app/layout.tsx`、`app/page.tsx`。
-- **调整配色、间距和手机界面尺寸**：`app/globals.css`。
-- **修改示例记录和页面文案**：`app/page.tsx` 中的 `initial` 数组及页面内容。
-- **完善 VIP、医院疗程或医生端**：在现有界面基础上扩展对应流程。
+- **App name and page title:** `app/layout.tsx` and `app/page.tsx`.
+- **Colors, spacing, and phone layout:** `app/globals.css`.
+- **Example entries and interface text:** the `initial` array and screen content in `app/page.tsx`.
+- **VIP, hospital care, or doctor features:** extend the existing interface with the corresponding flows.
 
-`.openai/hosting.json` 关联当前演示站点，不包含访问密钥。本地运行无需修改；独立部署时应使用自己的托管项目配置。代码上传到 GitHub 不会自动发布或更新在线演示。
+`.openai/hosting.json` links to the current demo site and contains no access credentials. It does not need changes for local development. Use your own hosting project configuration for an independent deployment. Uploading code to GitHub does not automatically publish the demo.
 
-## 使用说明
+## Usage note
 
-本项目是课程 UI 原型，页面内容与示例记录不构成医疗诊断或治疗建议。课堂演示建议使用示例图片，避免提交真实患者资料。
+This is a course UI prototype. Its content and example entries do not provide medical diagnosis or treatment advice. Use sample images for presentations and avoid committing real patient information.
