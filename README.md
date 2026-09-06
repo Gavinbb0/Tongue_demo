@@ -12,12 +12,12 @@ The hosted demo currently allows access only to the project owner. Classmates an
 
 ## Implemented screens
 
-| Screen | Features |
-| --- | --- |
-| Home | Daily check-in, weekly activity, latest entry, and photo tips |
-| Capture | Simulated capture, local image selection, photo replacement, feelings and notes, and save confirmation |
-| Journal | Entry history, entry count, details, and photo previews |
-| Profile | Basic membership, journal shortcut, reminder demo switch, privacy information, and help |
+| Screen  | Features                                                                                       |
+| ------- | ---------------------------------------------------------------------------------------------- |
+| Home    | Daily check-in, weekly activity, latest entry, and photo tips                                  |
+| Capture | Simulated capture, local image selection, feelings and notes, and simulated AI Doctor guidance |
+| Journal | Entry history, entry details, photo previews, and saved AI guidance                            |
+| Profile | Basic membership, journal shortcut, reminder demo switch, privacy information, and help        |
 
 The interface uses a teal palette, rounded cards, and bottom navigation. Desktop browsers display a phone-shaped preview; smaller screens use the available width. All interface text and example entries are in English.
 
@@ -26,8 +26,8 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 1. Select **Start today’s check-in** on Home.
 2. Select **Try a demo capture**, or **Choose a photo** to pick a local image.
 3. Choose how you feel and optionally add notes about sleep, meals, or your day.
-4. Select **Save entry** and review the confirmation.
-5. Open **Journal**, then select the new entry to view its details.
+4. Select **Get AI Doctor advice** and review the personalized demo guidance.
+5. Save the guidance, open **Journal**, then select the new entry to view its details.
 6. Open **Profile** to explore the Basic plan and feature information.
 
 ## Demo scope
@@ -37,19 +37,20 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 - New entries exist only in the current page's React state and reset on refresh.
 - Initial entries, the homepage date, and calendar states are demonstration data, not real patient information.
 - The reminder switch demonstrates a setting; it does not send notifications.
-- There is no real account login, payment processing, automated tongue diagnosis, model training, medical report generation, or electronic medical record integration.
+- The AI Doctor experience uses local, prewritten demo guidance based on the selected feeling. It does not analyze the image, call an AI model, or provide a medical diagnosis.
+- There is no real account login, payment processing, model training, medical report generation, or electronic medical record integration.
 - VIP and hospital linking currently display benefit information only. They do not activate memberships, charge users, or share data.
 
 ## Planned product scope
 
 The following are product concepts and **are not implemented**:
 
-| User type | Planned benefits |
-| --- | --- |
-| Basic | Free daily check-ins and entry history |
-| Paid VIP | Entry comparisons, trends, full reports, and exports |
+| User type          | Planned benefits                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| Basic              | Free daily check-ins and entry history                                                                    |
+| Paid VIP           | Entry comparisons, trends, full reports, and exports                                                      |
 | Hospital care plan | Hospital invitation, full access during treatment, and sharing with a linked doctor after patient consent |
-| Doctor | Review home uploads through an electronic medical record entry point; manage care plans and invitations |
+| Doctor             | Review home uploads through an electronic medical record entry point; manage care plans and invitations   |
 
 After hospital-sponsored access ends, users may return to Basic or choose to purchase VIP. Paid membership and hospital care relationships are managed separately.
 
