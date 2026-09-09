@@ -1214,6 +1214,113 @@ textarea {
   font-size: 9px;
   margin-top: 6px;
 }
+.completion-legend {
+  display: flex;
+  gap: 14px;
+  margin: 15px 0 12px;
+  color: #778b82;
+  font-size: 10px;
+}
+.completion-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.completion-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: #dfe5e2;
+}
+.completion-legend i.recorded {
+  background: #138975;
+}
+.completion-chart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.completion-chart > div {
+  min-width: 0;
+  text-align: center;
+}
+.completion-box {
+  height: 55px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 7px;
+}
+.completion-chart .recorded .completion-box {
+  background: linear-gradient(160deg, #49aa92, #087f70);
+  color: #fff;
+}
+.completion-chart .missed .completion-box {
+  background: #e7ebe9;
+  color: #9aa7a1;
+}
+.completion-chart strong,
+.completion-chart small {
+  display: block;
+}
+.completion-chart strong {
+  color: #4d6b60;
+  font-size: 10px;
+}
+.completion-chart small {
+  color: #8b9993;
+  font-size: 8px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.monthly-card {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 12px 16px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e3ebe7;
+  border-radius: 19px;
+  padding: 17px;
+}
+.monthly-card > div:first-child small,
+.monthly-card > div:first-child strong,
+.monthly-card > div:first-child span {
+  display: block;
+}
+.monthly-card > div:first-child small {
+  color: #81948b;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.monthly-card > div:first-child strong {
+  color: #087f70;
+  font-size: 29px;
+  margin: 3px 0;
+}
+.monthly-card > div:first-child span,
+.monthly-card p {
+  color: #7b8e85;
+  font-size: 9px;
+}
+.month-dots {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+}
+.month-dots i {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: #2c9a82;
+}
+.month-dots i.missed {
+  background: #dfe5e2;
+}
+.monthly-card p {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: right;
+}
 .trend-card p,
 .goal-card p,
 .clinical-card p {
