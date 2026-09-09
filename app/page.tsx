@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   Activity,
   Home,
@@ -26,6 +27,20 @@ import {
   Sparkles,
   Stethoscope,
   LoaderCircle,
+  TrendingUp,
+  ClipboardList,
+  LockKeyhole,
+  Moon,
+  Utensils,
+  Dumbbell,
+  Weight,
+  Pill,
+  FlaskConical,
+  Flag,
+  Target,
+  RefreshCw,
+  FileText,
+  Plus,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -43,7 +58,16 @@ type Entry = {
   note: string;
   image?: string;
   advice?: string[];
+  health?: {
+    weight: string;
+    symptoms: string;
+    medication: string;
+    sleep: string;
+    activity: string;
+    meals: string;
+  };
 };
+type JournalView = 'entries' | 'trends' | 'visit';
 const initial: Entry[] = [
   {
     id: 1,
@@ -77,7 +101,21 @@ export default function Page() {
     [feeling, setFeeling] = useState('Feeling good'),
     [note, setNote] = useState(''),
     [saved, setSaved] = useState(false),
-    [reminder, setReminder] = useState(false);
+    [reminder, setReminder] = useState(false),
+    [plan, setPlan] = useState<'basic' | 'vip'>('basic'),
+    [journalView, setJournalView] = useState<JournalView>('entries'),
+    [hospitalLinked, setHospitalLinked] = useState(false),
+    [weightValue, setWeightValue] = useState('68.4'),
+    [symptoms, setSymptoms] = useState(''),
+    [medication, setMedication] = useState(''),
+    [sleep, setSleep] = useState('7.0'),
+    [activityMinutes, setActivityMinutes] = useState('32'),
+    [meals, setMeals] = useState('Balanced'),
+    [visitQuestions, setVisitQuestions] = useState([
+      'Could my recent fatigue be related to my sleep pattern?',
+      'Should I change how often I record symptoms?',
+    ]);
+  const isVip = plan === 'vip';
   const advice =
     feeling === 'A little tired'
       ? [
@@ -113,6 +151,14 @@ export default function Page() {
         note: note || 'No notes added',
         image: photo,
         advice,
+        health: {
+          weight: weightValue,
+          symptoms: symptoms || 'No new symptoms',
+          medication: medication || 'No medication changes',
+          sleep,
+          activity: activityMinutes,
+          meals,
+        },
       },
       ...records,
     ]);
@@ -120,6 +166,8 @@ export default function Page() {
     setCaptured(false);
     setPhoto('');
     setNote('');
+    setSymptoms('');
+    setMedication('');
     setModal('success');
   };
   const requestAdvice = () => {
@@ -145,6 +193,211 @@ export default function Page() {
       <ChevronRight size={17} />
     </button>
   );
+  const selectPlan = (nextPlan: 'basic' | 'vip') => {
+    setPlan(nextPlan);
+    setModal('');
+  };
+  const updateQuestion = (index: number, value: string) => {
+    setVisitQuestions((current) =>
+      current.map((question, questionIndex) =>
+        questionIndex === index ? value : question,
+      ),
+    );
+  };
+  const trendsPanel = (
+    <div className="feature-stack">
+      <section className="trend-card">
+        <div className="card-heading">
+          <span>
+            <small>{isVip ? '30-DAY VIEW' : '7-DAY PREVIEW'}</small>
+            <strong>Tongue check-in trend</strong>
+          </span>
+          <TrendingUp size={21} />
+        </div>
+        <div className="trend-chart" aria-label="Check-in consistency chart">
+          {[42, 66, 54, 83, 72, 91, 78, 88, 62, 94, 84, 96].map(
+            (height, index) => (
+              <span
+                key={index}
+                className={!isVip && index > 5 ? 'locked-bar' : ''}
+                style={{ height: `${height}%` }}
+              />
+            ),
+          )}
+        </div>
+        <div className="trend-axis">
+          <span>Aug 7</span>
+          <span>Sep 5</span>
+        </div>
+        <p>
+          {isVip
+            ? 'Your records are most consistent on mornings after seven or more hours of sleep.'
+            : 'Basic shows a short preview. VIP adds longer, more detailed longitudinal trends.'}
+        </p>
+      </section>
+
+      <section className="integration-card">
+        <div className="sectionhead compact">
+          <h2>Daily factors</h2>
+          <span className={isVip ? 'plan-badge vip' : 'plan-badge'}>
+            {isVip ? 'VIP connected' : 'Basic preview'}
+          </span>
+        </div>
+        <div className="factor-grid">
+          {[
+            [Moon, 'Sleep', `${sleep} hr`, 'Regularity'],
+            [Dumbbell, 'Activity', `${activityMinutes} min`, 'Daily movement'],
+            [Utensils, 'Meals', meals, 'Nutrition note'],
+          ].map(([Icon, label, value, detail]) => {
+            const FactorIcon = Icon as typeof Moon;
+            return (
+              <div className="factor" key={String(label)}>
+                <FactorIcon size={19} />
+                <small>{String(label)}</small>
+                <strong>{String(value)}</strong>
+                <span>{String(detail)}</span>
+              </div>
+            );
+          })}
+        </div>
+        {!isVip && (
+          <button className="locked-feature" onClick={() => setModal('vip')}>
+            <LockKeyhole size={18} />
+            <span>
+              <strong>Unlock multi-source insights</strong>
+              <small>See how sleep, activity and meals relate to your records.</small>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+        )}
+      </section>
+
+      <button
+        className={isVip ? 'feature-row' : 'feature-row locked'}
+        onClick={() => setModal(isVip ? 'reports' : 'vip')}
+      >
+        <span className="feature-icon"><FlaskConical size={21} /></span>
+        <span>
+          <strong>Compare test reports</strong>
+          <small>{isVip ? '3 reports ready to compare' : 'VIP feature'}</small>
+        </span>
+        {isVip ? <ChevronRight size={17} /> : <LockKeyhole size={16} />}
+      </button>
+
+      <section className={isVip ? 'goal-card' : 'goal-card locked-goal'}>
+        <div className="card-heading">
+          <span>
+            <small>CARE GOAL</small>
+            <strong>Build a consistent morning record</strong>
+          </span>
+          {isVip ? <Target size={22} /> : <LockKeyhole size={18} />}
+        </div>
+        <div className="goal-progress"><span style={{ width: isVip ? '72%' : '28%' }} /></div>
+        <p>
+          {isVip
+            ? 'Goal set with Dr. Chen · 8 of 11 planned check-ins completed.'
+            : 'VIP can turn clinician goals into personalized daily support.'}
+        </p>
+      </section>
+    </div>
+  );
+  const visitPrepPanel = (
+    <div className="feature-stack">
+      <section className="visit-card">
+        <div className="visit-head">
+          <span className="feature-icon"><ClipboardList size={22} /></span>
+          <span>
+            <small>SMART VISIT PREP</small>
+            <strong>{isVip ? 'Personalized visit brief' : 'Basic visit summary'}</strong>
+          </span>
+          <span className={isVip ? 'plan-badge vip' : 'plan-badge'}>
+            {isVip ? 'VIP' : 'Basic'}
+          </span>
+        </div>
+        <div className="summary-grid">
+          <div><small>Records</small><strong>{records.length}</strong></div>
+          <div><small>Latest feeling</small><strong>{records[0]?.feeling ?? '—'}</strong></div>
+          <div><small>Medication changes</small><strong>{medication || 'None noted'}</strong></div>
+          <div><small>Next review</small><strong>Sep 18</strong></div>
+        </div>
+        {isVip && (
+          <div className="personalized-note">
+            <Sparkles size={17} />
+            <span>
+              Your fatigue notes appear most often after shorter sleep. Bring this pattern to your next visit.
+            </span>
+          </div>
+        )}
+      </section>
+
+      <section className="question-card">
+        <div className="sectionhead compact">
+          <h2>Questions for your clinician</h2>
+          {!isVip && <LockKeyhole size={16} />}
+        </div>
+        {visitQuestions.map((question, index) =>
+          isVip ? (
+            <label className="question-edit" key={index}>
+              <span>{index + 1}</span>
+              <input
+                value={question}
+                aria-label={`Visit question ${index + 1}`}
+                onChange={(event) => updateQuestion(index, event.target.value)}
+              />
+            </label>
+          ) : (
+            <div className="question-readonly" key={index}>
+              <span>{index + 1}</span>{question}
+            </div>
+          ),
+        )}
+        {isVip ? (
+          <button
+            className="add-question"
+            onClick={() => setVisitQuestions((items) => [...items, ''])}
+          >
+            <Plus size={16} /> Add a question
+          </button>
+        ) : (
+          <button className="locked-feature" onClick={() => setModal('vip')}>
+            <LockKeyhole size={18} />
+            <span>
+              <strong>Edit your visit questions</strong>
+              <small>Available with the personalized VIP visit brief.</small>
+            </span>
+            <ChevronRight size={16} />
+          </button>
+        )}
+      </section>
+
+      <section className="clinical-card">
+        <div className="card-heading">
+          <span>
+            <small>HOSPITAL CARE PROJECT</small>
+            <strong>Clinical summary & review flag</strong>
+          </span>
+          <Flag size={20} />
+        </div>
+        {hospitalLinked ? (
+          <>
+            <p>Shared with Dr. Chen · Latest record awaiting review.</p>
+            <span className="review-flag"><Flag size={14} /> Review requested</span>
+          </>
+        ) : (
+          <>
+            <p>Available in both Basic and VIP when you join a hospital care project and consent to sharing.</p>
+            <button className="secondary compact-button" onClick={() => setModal('hospital')}>
+              Connect a hospital
+            </button>
+          </>
+        )}
+      </section>
+
+      <button className="primary" onClick={() => setModal('visitSummary')}>
+        <FileText size={18} /> Open visit summary
+      </button>
+    </div>
+  );
   return (
     <main className="stage">
       <header className="brandbar">
@@ -152,9 +405,12 @@ export default function Page() {
           <span className="logo">
             <Activity size={23} />
           </span>
-          TongueCare <span className="edition">Basic</span>
+          TongueCare <span className={isVip ? 'edition vip' : 'edition'}>{isVip ? 'VIP' : 'Basic'}</span>
         </div>
-        <span className="stage-label">DAILY HEALTH JOURNAL</span>
+        <div className="plan-preview" aria-label="Preview membership plan">
+          <button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>Basic</button>
+          <button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}><Crown size={13} /> VIP</button>
+        </div>
       </header>
       <div className="phone">
         <div className="status">
@@ -257,6 +513,30 @@ export default function Page() {
                 </button>
               </div>
               {row(records[0])}
+              <div className="home-feature-grid">
+                <button
+                  className="home-feature"
+                  onClick={() => {
+                    setJournalView('trends');
+                    setTab('archive');
+                  }}
+                >
+                  <TrendingUp size={20} />
+                  <span><strong>Trends</strong><small>{isVip ? '30-day insights' : '7-day preview'}</small></span>
+                  <ChevronRight size={15} />
+                </button>
+                <button
+                  className="home-feature"
+                  onClick={() => {
+                    setJournalView('visit');
+                    setTab('archive');
+                  }}
+                >
+                  <ClipboardList size={20} />
+                  <span><strong>Visit prep</strong><small>{isVip ? 'Personalized brief' : 'Basic summary'}</small></span>
+                  <ChevronRight size={15} />
+                </button>
+              </div>
               <div className="sectionhead">
                 <h2>Quick tips</h2>
                 <span className="eyebrow" style={{ fontSize: 10 }}>
@@ -294,7 +574,7 @@ export default function Page() {
               </div>
               <div className={'capture-area ' + (captured ? 'ready' : '')}>
                 {photo ? (
-                  <img src={photo} alt="Tongue photo ready to save" />
+                  <Image src={photo} alt="Tongue ready to save" width={390} height={263} unoptimized />
                 ) : captured ? (
                   <>
                     <CheckCircle2 size={52} strokeWidth={1.3} />
@@ -309,6 +589,24 @@ export default function Page() {
                   </>
                 )}
               </div>
+              {captured && (
+                <output className="quality-check">
+                  <span className="quality-icon"><CheckCircle2 size={20} /></span>
+                  <span>
+                    <strong>Image quality passed</strong>
+                    <small>Tongue centered · Even light · Clear focus</small>
+                  </span>
+                  <button
+                    aria-label="Retake photo"
+                    onClick={() => {
+                      setCaptured(false);
+                      setPhoto('');
+                    }}
+                  >
+                    <RefreshCw size={15} /> Retake
+                  </button>
+                </output>
+              )}
               {!captured ? (
                 <>
                   <button className="primary" onClick={() => setCaptured(true)}>
@@ -331,7 +629,7 @@ export default function Page() {
                           }
                           const reader = new FileReader();
                           reader.onload = () => {
-                            setPhoto(String(reader.result));
+                            if (typeof reader.result === 'string') setPhoto(reader.result);
                             setCaptured(true);
                           };
                           reader.readAsDataURL(file);
@@ -387,6 +685,53 @@ export default function Page() {
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Sleep, meals, or anything you want to note…"
                   />
+                  <div className="sectionhead compact health-heading">
+                    <h2>Health details</h2>
+                    <span className="muted">Optional</span>
+                  </div>
+                  <div className="health-fields">
+                    <label>
+                      <span><Weight size={15} /> Weight (kg)</span>
+                      <input value={weightValue} onChange={(e) => setWeightValue(e.target.value)} inputMode="decimal" />
+                    </label>
+                    <label>
+                      <span><Moon size={15} /> Sleep (hr)</span>
+                      <input value={sleep} onChange={(e) => setSleep(e.target.value)} inputMode="decimal" />
+                    </label>
+                    <label>
+                      <span><Dumbbell size={15} /> Activity (min)</span>
+                      <input value={activityMinutes} onChange={(e) => setActivityMinutes(e.target.value)} inputMode="numeric" />
+                    </label>
+                    <label>
+                      <span><Utensils size={15} /> Meals</span>
+                      <select value={meals} onChange={(e) => setMeals(e.target.value)}>
+                        <option>Balanced</option>
+                        <option>Light</option>
+                        <option>Irregular</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label className="fieldlabel" htmlFor="symptoms">
+                    Symptoms or changes
+                  </label>
+                  <input
+                    id="symptoms"
+                    className="text-input"
+                    value={symptoms}
+                    onChange={(e) => setSymptoms(e.target.value)}
+                    placeholder="e.g. mild fatigue"
+                  />
+                  <label className="fieldlabel" htmlFor="medication">
+                    <Pill size={15} style={{ display: 'inline', marginRight: 6 }} />
+                    Medication or test update
+                  </label>
+                  <input
+                    id="medication"
+                    className="text-input"
+                    value={medication}
+                    onChange={(e) => setMedication(e.target.value)}
+                    placeholder="e.g. no changes"
+                  />
                   <button
                     className="primary"
                     style={{ marginTop: 16 }}
@@ -404,35 +749,69 @@ export default function Page() {
             </TabsContent>
             <TabsContent value="archive" className="page-panel">
               <span className="eyebrow">YOUR HEALTH JOURNAL</span>
-              <h1 className="page-title">Health journal</h1>
-              <p className="subtitle">Get to know your everyday patterns.</p>
-              <div className="archive-info">
-                <div>
-                  <strong>{records.length}</strong>
-                  <span> entries</span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <CalendarDays size={22} style={{ margin: '0 0 5px auto' }} />
-                  <span>September 2026</span>
-                </div>
-              </div>
-              <div className="sectionhead">
-                <h2>All entries</h2>
-                <span className="muted">Most recent first</span>
-              </div>
-              <div className="record-list">{records.map(row)}</div>
-              <button className="upsell" onClick={() => setModal('vip')}>
-                <Crown size={23} />
-                <span style={{ flex: 1 }}>
-                  Curious about changes over time?
-                  <br />
-                  <strong>Explore VIP comparisons</strong>
-                </span>
-                <ChevronRight size={16} />
-              </button>
-              <p className="footnote">
-                Demo entries only. No medical diagnosis.
+              <h1 className="page-title">
+                {journalView === 'entries'
+                  ? 'Health journal'
+                  : journalView === 'trends'
+                    ? 'Health trends'
+                    : 'Visit preparation'}
+              </h1>
+              <p className="subtitle">
+                {journalView === 'entries'
+                  ? 'Record today. Understand changes over time.'
+                  : journalView === 'trends'
+                    ? 'See your records alongside everyday factors.'
+                    : 'Bring a clear, useful summary to your next visit.'}
               </p>
+              <div className="journal-switch" aria-label="Journal sections">
+                {[
+                  ['entries', FolderHeart, 'Entries'],
+                  ['trends', TrendingUp, 'Trends'],
+                  ['visit', ClipboardList, 'Visit prep'],
+                ].map(([value, Icon, label]) => {
+                  const SwitchIcon = Icon as typeof FolderHeart;
+                  return (
+                    <button
+                      key={String(value)}
+                      className={journalView === value ? 'active' : ''}
+                      onClick={() => setJournalView(value as JournalView)}
+                    >
+                      <SwitchIcon size={16} />{String(label)}
+                    </button>
+                  );
+                })}
+              </div>
+              {journalView === 'entries' ? (
+                <>
+                  <div className="archive-info">
+                    <div>
+                      <strong>{records.length}</strong>
+                      <span> entries</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <CalendarDays size={22} style={{ margin: '0 0 5px auto' }} />
+                      <span>September 2026</span>
+                    </div>
+                  </div>
+                  <div className="sectionhead">
+                    <h2>All entries</h2>
+                    <span className="muted">Most recent first</span>
+                  </div>
+                  <div className="record-list">{records.map(row)}</div>
+                  {!isVip && (
+                    <button className="upsell" onClick={() => setModal('vip')}>
+                      <Crown size={23} />
+                      <span style={{ flex: 1 }}>
+                        See more of your health story
+                        <br />
+                        <strong>Explore VIP trends and visit prep</strong>
+                      </span>
+                      <ChevronRight size={16} />
+                    </button>
+                  )}
+                  <p className="footnote">Demo entries only. No medical diagnosis.</p>
+                </>
+              ) : journalView === 'trends' ? trendsPanel : visitPrepPanel}
             </TabsContent>
             <TabsContent value="profile" className="page-panel">
               <span className="eyebrow">A LITTLE CARE, EVERY DAY</span>
@@ -443,24 +822,53 @@ export default function Page() {
                 </span>
                 <div>
                   <h2>Alex</h2>
-                  <span className="pill">Basic · Free plan</span>
+                  <span className={isVip ? 'pill vip-pill' : 'pill'}>
+                    {isVip ? 'VIP · Demo access' : 'Basic · Free plan'}
+                  </span>
                 </div>
               </div>
-              <button className="upsell" onClick={() => setModal('vip')}>
-                <Crown size={26} />
-                <span style={{ flex: 1 }}>
-                  <strong style={{ fontSize: 16 }}>
-                    More from your journal
-                  </strong>
-                  <br />
-                  Explore all VIP benefits
+              <div className="profile-plan-switch">
+                <span>
+                  <strong>Preview membership</strong>
+                  <small>Switch plans to explore this UI prototype.</small>
                 </span>
-                <ChevronRight size={17} />
-              </button>
+                <div>
+                  <button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>Basic</button>
+                  <button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}>VIP</button>
+                </div>
+              </div>
+              {!isVip && (
+                <button className="upsell" onClick={() => setModal('vip')}>
+                  <Crown size={26} />
+                  <span style={{ flex: 1 }}>
+                    <strong style={{ fontSize: 16 }}>More from your journal</strong>
+                    <br />Long-term trends · Personalized visit prep
+                  </span>
+                  <ChevronRight size={17} />
+                </button>
+              )}
+              {isVip && (
+                <div className="vip-status-card">
+                  <Crown size={22} />
+                  <span><strong>VIP features are open</strong><small>Full trends, connected factors and personalized visit prep</small></span>
+                </div>
+              )}
               <div className="menu">
                 <button className="menu-row" onClick={() => setTab('archive')}>
                   <FolderHeart size={19} />
-                  <span>My health journal</span>
+                  <span>My health journal & trends</span>
+                  <ChevronRight size={16} />
+                </button>
+                <button
+                  className="menu-row"
+                  onClick={() => {
+                    setJournalView('visit');
+                    setTab('archive');
+                  }}
+                >
+                  <ClipboardList size={19} />
+                  <span>Smart Visit Prep</span>
+                  <small className="muted">{isVip ? 'Personalized' : 'Basic'}</small>
                   <ChevronRight size={16} />
                 </button>
                 <button
@@ -561,6 +969,8 @@ export default function Page() {
                   large: 'Photo too large',
                   analyzing: 'AI Doctor is reviewing your check-in',
                   ai: 'Your AI Doctor guidance',
+                  reports: 'Test report comparison',
+                  visitSummary: 'Smart Visit Prep summary',
                 } as Record<string, string>
               )[modal]
             }
@@ -572,9 +982,12 @@ export default function Page() {
             <>
               <div className="detail-box">
                 {selected.image ? (
-                  <img
+                  <Image
                     src={selected.image}
-                    alt="Photo for this entry"
+                    alt="Tongue entry"
+                    width={340}
+                    height={230}
+                    unoptimized
                     style={{
                       maxHeight: 230,
                       width: '100%',
@@ -594,6 +1007,16 @@ export default function Page() {
                 </strong>
                 <p>Feeling: {selected.feeling}</p>
                 <p>Note: {selected.note}</p>
+                {selected.health && (
+                  <div className="entry-health-grid">
+                    <span><small>Weight</small><strong>{selected.health.weight} kg</strong></span>
+                    <span><small>Sleep</small><strong>{selected.health.sleep} hr</strong></span>
+                    <span><small>Activity</small><strong>{selected.health.activity} min</strong></span>
+                    <span><small>Meals</small><strong>{selected.health.meals}</strong></span>
+                    <span className="wide"><small>Symptoms</small><strong>{selected.health.symptoms}</strong></span>
+                    <span className="wide"><small>Medication / tests</small><strong>{selected.health.medication}</strong></span>
+                  </div>
+                )}
                 {selected.advice && (
                   <div className="ai-entry-summary">
                     <strong>AI Doctor guidance</strong>
@@ -611,7 +1034,7 @@ export default function Page() {
               </div>
             </>
           ) : modal === 'analyzing' ? (
-            <div className="ai-loading" role="status">
+            <output className="ai-loading">
               <span className="ai-orb">
                 <LoaderCircle size={34} />
               </span>
@@ -620,7 +1043,7 @@ export default function Page() {
                 This simulated step shows how AI guidance could appear in the
                 final product.
               </p>
-            </div>
+            </output>
           ) : modal === 'ai' ? (
             <>
               <div className="ai-card">
@@ -681,6 +1104,35 @@ export default function Page() {
                 View journal
               </button>
             </>
+          ) : modal === 'reports' ? (
+            <div className="modal-copy">
+              <p>VIP compares multiple test reports alongside your health records.</p>
+              <div className="report-comparison">
+                <div><small>JUN 12</small><strong>Routine blood test</strong><span>Baseline</span></div>
+                <div><small>AUG 08</small><strong>Routine blood test</strong><span className="steady">Stable</span></div>
+                <div><small>SEP 03</small><strong>Follow-up panel</strong><span className="review">Review</span></div>
+              </div>
+              <div className="detail-box">
+                <strong>Trend note</strong><br />Most tracked values remain stable. One recent item is marked for discussion at your next visit.
+              </div>
+              <p className="ai-disclaimer">Demo data only. Test results require clinician interpretation.</p>
+            </div>
+          ) : modal === 'visitSummary' ? (
+            <div className="modal-copy">
+              <div className="visit-summary-sheet">
+                <span className="eyebrow">VISIT BRIEF · SEP 2026</span>
+                <h3>Alex’s check-in summary</h3>
+                <p><strong>{records.length} records</strong> · Latest feeling: {records[0]?.feeling}</p>
+                <hr />
+                <strong>What to discuss</strong>
+                <ul>
+                  {visitQuestions.filter(Boolean).map((question) => <li key={question}>{question}</li>)}
+                </ul>
+                {isVip && <p><strong>Personalized pattern:</strong> Fatigue notes appear more often after shorter sleep.</p>}
+                {hospitalLinked && <span className="review-flag"><Flag size={14} /> Clinician review requested</span>}
+              </div>
+              <p>{isVip ? 'This personalized VIP version brings trends, daily factors and your questions together.' : 'Basic includes a concise summary. VIP adds editable questions and personalized trend context.'}</p>
+            </div>
           ) : (
             <div className="modal-copy">
               {modal === 'guide' ? (
@@ -704,19 +1156,25 @@ export default function Page() {
               ) : modal === 'vip' ? (
                 <>
                   <p>
-                    Basic includes daily photos, check-ins, and your entry
-                    history.
+                    Basic includes guided capture, image-quality checks, daily health records, reminders and a basic visit summary.
                   </p>
-                  <div className="detail-box">
-                    VIP unlocks
-                    <br />· Side-by-side entry comparisons
-                    <br />· Trends over time
-                    <br />· Full reports and exports
+                  <div className="vip-benefit-list">
+                    {[
+                      'Longer, more detailed longitudinal trends',
+                      'Sleep, activity and nutrition data integration',
+                      'Personalized support around clinician goals',
+                      'Comparison across multiple test reports',
+                      'Personalized Smart Visit Prep with editable questions',
+                    ].map((benefit) => (
+                      <span key={benefit}><CheckCircle2 size={17} />{benefit}</span>
+                    ))}
                   </div>
                   <p>
-                    Membership features are planned for the VIP version. No
-                    purchases or charges are made here.
+                    This prototype does not make a real purchase or charge.
                   </p>
+                  <button className="primary vip-primary" onClick={() => selectPlan('vip')}>
+                    <Crown size={18} /> Preview VIP features
+                  </button>
                 </>
               ) : modal === 'hospital' ? (
                 <>
@@ -726,9 +1184,20 @@ export default function Page() {
                   </p>
                   <div className="detail-box">
                     Enjoy full access during your care plan. With your consent,
-                    your linked doctor can view shared entries.
+                    your linked clinician can view the clinical summary and review flags.
                   </div>
-                  <p>Hospital linking is planned for the care plan version.</p>
+                  <p>This prototype uses a simulated hospital connection.</p>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setHospitalLinked(true);
+                      setModal('');
+                      setJournalView('visit');
+                      setTab('archive');
+                    }}
+                  >
+                    <Building2 size={18} /> Connect demo care plan
+                  </button>
                 </>
               ) : modal === 'privacy' ? (
                 <p>
