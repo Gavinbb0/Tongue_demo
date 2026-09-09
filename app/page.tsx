@@ -111,6 +111,7 @@ export default function Page() {
     [sleep, setSleep] = useState('7.0'),
     [activityMinutes, setActivityMinutes] = useState('32'),
     [meals, setMeals] = useState('Balanced'),
+    [reportFileName, setReportFileName] = useState(''),
     [visitQuestions, setVisitQuestions] = useState([
       'Could my recent fatigue be related to my sleep pattern?',
       'Should I change how often I record symptoms?',
@@ -334,7 +335,7 @@ export default function Page() {
         <span className="feature-icon"><FlaskConical size={21} /></span>
         <span>
           <strong>Compare test reports</strong>
-          <small>{isVip ? '3 reports ready to compare' : 'VIP feature'}</small>
+          <small>{isVip ? `${reportFileName ? 4 : 3} reports ready · Upload available` : 'VIP feature'}</small>
         </span>
         {isVip ? <ChevronRight size={17} /> : <LockKeyhole size={16} />}
       </button>
@@ -376,19 +377,54 @@ export default function Page() {
           <div><small>Next review</small><strong>Sep 18</strong></div>
         </div>
         {isVip && (
-          <div className="personalized-note">
-            <Sparkles size={17} />
-            <span>
-              Your fatigue notes appear most often after shorter sleep. Bring this pattern to your next visit.
-            </span>
+          <div className="vip-brief">
+            <div className="vip-brief-title">
+              <Crown size={17} />
+              <span><strong>Added in your VIP brief</strong><small>Personalized from your recent records</small></span>
+            </div>
+            <div className="vip-brief-grid">
+              <div>
+                <TrendingUp size={17} />
+                <span><small>30-DAY CHANGE</small><strong>25 of 30 check-ins</strong><em>Sleep averaged 6.8 hr</em></span>
+              </div>
+              <div>
+                <Target size={17} />
+                <span><small>CARE GOAL</small><strong>8 of 11 completed</strong><em>Morning record goal</em></span>
+              </div>
+              <div>
+                <FlaskConical size={17} />
+                <span><small>REPORT UPDATE</small><strong>1 item to review</strong><em>Sep 3 follow-up panel</em></span>
+              </div>
+              <div>
+                <Flag size={17} />
+                <span><small>DISCUSS AT VISIT</small><strong>Fatigue after short sleep</strong><em>Pattern from your notes</em></span>
+              </div>
+            </div>
+            <div className="personalized-note">
+              <Sparkles size={17} />
+              <span>Your records suggest a useful question: could shorter sleep be contributing to your fatigue?</span>
+            </div>
           </div>
+        )}
+        {!isVip && (
+          <button className="basic-brief-limit" onClick={() => setModal('vip')}>
+            <LockKeyhole size={17} />
+            <span>
+              <strong>Basic summary ends here</strong>
+              <small>VIP adds 30-day changes, care goals, report updates and discussion priorities.</small>
+            </span>
+            <ChevronRight size={16} />
+          </button>
         )}
       </section>
 
       <section className="question-card">
         <div className="sectionhead compact">
-          <h2>Questions for your clinician</h2>
-          {!isVip && <LockKeyhole size={16} />}
+          <div>
+            <h2>Questions for your clinician</h2>
+            <p className="factor-intro">{isVip ? 'Edit or add questions before your visit.' : 'Basic suggestions are read only.'}</p>
+          </div>
+          {isVip ? <span className="plan-badge vip">VIP · Editable</span> : <LockKeyhole size={16} />}
         </div>
         {visitQuestions.map((question, index) =>
           isVip ? (
@@ -1161,8 +1197,21 @@ export default function Page() {
             </>
           ) : modal === 'reports' ? (
             <div className="modal-copy">
-              <p>VIP compares multiple test reports alongside your health records.</p>
+              <p>Upload a report to place it alongside earlier results and your health records.</p>
+              <label className="report-upload">
+                <FileImage size={20} />
+                <span>
+                  <strong>{reportFileName || 'Upload a test report'}</strong>
+                  <small>{reportFileName ? 'Added to this demo comparison' : 'PDF, JPG or PNG · demo only'}</small>
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf,image/jpeg,image/png"
+                  onChange={(event) => setReportFileName(event.target.files?.[0]?.name ?? '')}
+                />
+              </label>
               <div className="report-comparison">
+                {reportFileName && <div><small>TODAY</small><strong>{reportFileName}</strong><span className="new-report">New</span></div>}
                 <div><small>JUN 12</small><strong>Routine blood test</strong><span>Baseline</span></div>
                 <div><small>AUG 08</small><strong>Routine blood test</strong><span className="steady">Stable</span></div>
                 <div><small>SEP 03</small><strong>Follow-up panel</strong><span className="review">Review</span></div>
@@ -1179,11 +1228,22 @@ export default function Page() {
                 <h3>Alex’s check-in summary</h3>
                 <p><strong>{records.length} records</strong> · Latest feeling: {records[0]?.feeling}</p>
                 <hr />
+                {isVip && (
+                  <>
+                    <strong>VIP 30-day brief</strong>
+                    <ul>
+                      <li>25 of 30 planned check-ins completed.</li>
+                      <li>Morning record goal: 8 of 11 completed.</li>
+                      <li>One follow-up report item is marked for review.</li>
+                      <li>Fatigue was recorded more often after shorter sleep.</li>
+                    </ul>
+                    <hr />
+                  </>
+                )}
                 <strong>What to discuss</strong>
                 <ul>
                   {visitQuestions.filter(Boolean).map((question) => <li key={question}>{question}</li>)}
                 </ul>
-                {isVip && <p><strong>Personalized pattern:</strong> Fatigue notes appear more often after shorter sleep.</p>}
                 {hospitalLinked && <span className="review-flag"><Flag size={14} /> Clinician review requested</span>}
               </div>
               <p>{isVip ? 'This personalized VIP version brings trends, daily factors and your questions together.' : 'Basic includes a concise summary. VIP adds editable questions and personalized trend context.'}</p>
