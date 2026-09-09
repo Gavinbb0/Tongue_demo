@@ -260,34 +260,57 @@ export default function Page() {
 
       <section className="integration-card">
         <div className="sectionhead compact">
-          <h2>Daily factors</h2>
+          <div>
+            <h2>{isVip ? 'Connected factor trends' : "Today’s factors"}</h2>
+            <p className="factor-intro">
+              {isVip
+                ? 'Compare today with your recent records and spot useful patterns.'
+                : 'Values entered in today’s check-in.'}
+            </p>
+          </div>
           <span className={isVip ? 'plan-badge vip' : 'plan-badge'}>
-            {isVip ? 'VIP connected' : 'Basic preview'}
+            {isVip ? 'VIP · 30 days' : 'Basic · Today'}
           </span>
         </div>
         <div className="factor-grid">
           {[
-            [Moon, 'Sleep', `${sleep} hr`, 'Regularity'],
-            [Dumbbell, 'Activity', `${activityMinutes} min`, 'Daily movement'],
-            [Utensils, 'Meals', meals, 'Nutrition note'],
-          ].map(([Icon, label, value, detail]) => {
+            [Moon, 'Sleep', `${sleep} hr`, isVip ? '30-day avg 6.8 hr' : 'Entered today', isVip ? '+0.2 hr' : 'Manual'],
+            [Dumbbell, 'Activity', `${activityMinutes} min`, isVip ? '126 of 150 min weekly goal' : 'Entered today', isVip ? '84%' : 'Manual'],
+            [Utensils, 'Meals', meals, isVip ? '5 of 7 balanced days' : 'Entered today', isVip ? 'This week' : 'Manual'],
+          ].map(([Icon, label, value, detail, status]) => {
             const FactorIcon = Icon as typeof Moon;
             return (
               <div className="factor" key={String(label)}>
-                <FactorIcon size={19} />
-                <small>{String(label)}</small>
+                <div className="factor-top">
+                  <FactorIcon size={19} />
+                  <em>{String(status)}</em>
+                </div>
+                <small>{String(label)} today</small>
                 <strong>{String(value)}</strong>
                 <span>{String(detail)}</span>
+                {isVip && label === 'Activity' && (
+                  <div className="mini-progress" aria-label="84% of weekly activity goal completed"><i /></div>
+                )}
               </div>
             );
           })}
         </div>
+        {isVip && (
+          <div className="factor-insight">
+            <span><TrendingUp size={19} /></span>
+            <div>
+              <small>PATTERN IN YOUR RECORDS</small>
+              <strong>Fatigue appeared more often after nights with less than 6 hours of sleep.</strong>
+              <p>Based on your last 30 days of check-ins. This is an observation, not a diagnosis.</p>
+            </div>
+          </div>
+        )}
         {!isVip && (
           <button className="locked-feature" onClick={() => setModal('vip')}>
             <LockKeyhole size={18} />
             <span>
-              <strong>Unlock multi-source insights</strong>
-              <small>See how sleep, activity and meals relate to your records.</small>
+              <strong>Unlock 30-day comparisons</strong>
+              <small>See averages, goals and relationships between your daily factors.</small>
             </span>
             <ChevronRight size={16} />
           </button>
