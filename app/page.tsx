@@ -371,7 +371,10 @@ export default function Page() {
           </span>
         </div>
         <div className="summary-grid">
-          <div><small>Records</small><strong>{records.length}</strong></div>
+          <div>
+            <small>{isVip ? '30-day check-ins' : 'Records'}</small>
+            <strong>{isVip ? '25 / 30 days' : records.length}</strong>
+          </div>
           <div><small>Latest feeling</small><strong>{records[0]?.feeling ?? '—'}</strong></div>
           <div><small>Medication changes</small><strong>{medication || 'None noted'}</strong></div>
           <div><small>Next review</small><strong>Sep 18</strong></div>
@@ -1226,7 +1229,10 @@ export default function Page() {
               <div className="visit-summary-sheet">
                 <span className="eyebrow">VISIT BRIEF · SEP 2026</span>
                 <h3>Alex’s check-in summary</h3>
-                <p><strong>{records.length} records</strong> · Latest feeling: {records[0]?.feeling}</p>
+                <p>
+                  <strong>{isVip ? '25 check-ins in the last 30 days' : `${records.length} records`}</strong>
+                  {' · '}Latest feeling: {records[0]?.feeling}
+                </p>
                 <hr />
                 {isVip && (
                   <>
