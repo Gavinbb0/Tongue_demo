@@ -53,7 +53,7 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 | Sleep, activity, and meal factors | Today’s manually entered values | 30-day averages, weekly goals, and relationships between factors |
 | Personalized support around clinician goals | Locked | Included |
 | Comparison across multiple test reports | Locked | Included |
-| Smart Visit Prep | Current journal count, four-item summary, and read-only suggested questions | 25-of-30-day check-in summary, care-goal progress, report updates, discussion priorities, and editable questions |
+| Smart Visit Prep | Current journal count, three-item summary, and read-only suggested questions | 25-of-30-day check-in summary, next review, care-goal progress, report updates, discussion priorities, and editable questions |
 | Clinical summary and review flag | Included in a hospital project | Included in a hospital project |
 
 After hospital-sponsored access ends, users may return to Basic or choose to purchase VIP. Paid membership and hospital care relationships are managed separately.
