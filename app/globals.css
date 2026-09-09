@@ -1346,15 +1346,36 @@ textarea {
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
+.factor-intro {
+  color: #7a8d85;
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 3px 0 0;
+}
 .factor {
   background: #f3f7f5;
+  border: 1px solid #e8efec;
   border-radius: 13px;
   padding: 11px;
   min-width: 0;
 }
-.factor svg {
-  color: #45816e;
+.factor-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   margin-bottom: 8px;
+}
+.factor-top svg {
+  color: #45816e;
+  flex: none;
+}
+.factor-top em {
+  color: #7e928a;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .factor small,
 .factor strong,
@@ -1370,6 +1391,61 @@ textarea {
   font-size: 12px;
   margin: 3px 0;
   overflow-wrap: anywhere;
+}
+.mini-progress {
+  height: 4px;
+  background: #dfe9e5;
+  border-radius: 999px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.mini-progress i {
+  display: block;
+  width: 84%;
+  height: 100%;
+  background: #178b76;
+  border-radius: inherit;
+}
+.factor-insight {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 13px;
+  border: 1px solid #d8e9e2;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0f8f4, #f8fbf9);
+}
+.factor-insight > span {
+  width: 35px;
+  height: 35px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #087f70;
+  background: #dcefe7;
+}
+.factor-insight small,
+.factor-insight strong {
+  display: block;
+}
+.factor-insight small {
+  color: #16806f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.factor-insight strong {
+  color: #31594d;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+.factor-insight p {
+  color: #7a8d85;
+  font-size: 9px;
+  line-height: 1.45;
+  margin: 4px 0 0;
 }
 .locked-feature,
 .feature-row {
