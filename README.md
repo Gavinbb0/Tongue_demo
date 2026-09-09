@@ -16,7 +16,7 @@ The hosted demo currently allows access only to the project owner. Classmates an
 | ------- | -------- |
 | Home | Daily check-in, weekly activity, latest entry, trends shortcut, Smart Visit Prep, and photo tips |
 | Capture | Guided capture, automatic quality feedback, recapture, feelings, notes, weight, symptoms, medication, sleep, activity, meals, and simulated AI Doctor guidance |
-| Journal | Entry history, clearly labelled weekly check-in completion, VIP 30-day completion, daily-factor integration, clinician goals, test-report comparison, and Smart Visit Prep |
+| Journal | Entry history, clearly labelled weekly check-in completion, VIP 30-day completion, daily-factor integration, clinician goals, demo test-report upload and comparison, and Smart Visit Prep |
 | Profile | Basic/VIP preview switch, hospital care-plan connection, reminders, privacy information, and help |
 
 The interface uses a teal palette, rounded cards, and bottom navigation. Desktop browsers display a phone-shaped preview; smaller screens use the available width. All interface text and example entries are in English.
@@ -53,7 +53,7 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 | Sleep, activity, and meal factors | Today’s manually entered values | 30-day averages, weekly goals, and relationships between factors |
 | Personalized support around clinician goals | Locked | Included |
 | Comparison across multiple test reports | Locked | Included |
-| Smart Visit Prep | Basic summary | Personalized brief with editable questions |
+| Smart Visit Prep | Four-item summary and read-only suggested questions | 30-day changes, care-goal progress, report updates, discussion priorities, and editable questions |
 | Clinical summary and review flag | Included in a hospital project | Included in a hospital project |
 
 After hospital-sponsored access ends, users may return to Basic or choose to purchase VIP. Paid membership and hospital care relationships are managed separately.
