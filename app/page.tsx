@@ -116,6 +116,14 @@ export default function Page() {
       'Should I change how often I record symptoms?',
     ]);
   const isVip = plan === 'vip';
+  const sleepAverage = 6.8;
+  const sleepToday = Number.parseFloat(sleep);
+  const sleepDifference = Number.isFinite(sleepToday) ? sleepToday - sleepAverage : 0;
+  const sleepDifferenceLabel = `${sleepDifference >= 0 ? '+' : ''}${sleepDifference.toFixed(1)} hr vs avg`;
+  const activityToday = Number.parseInt(activityMinutes, 10);
+  const weeklyActivity = 94 + (Number.isFinite(activityToday) ? activityToday : 0);
+  const activityProgress = Math.min(100, Math.round((weeklyActivity / 150) * 100));
+  const balancedMealDays = meals === 'Balanced' ? 5 : 4;
   const advice =
     feeling === 'A little tired'
       ? [
@@ -261,22 +269,22 @@ export default function Page() {
       <section className="integration-card">
         <div className="sectionhead compact">
           <div>
-            <h2>{isVip ? 'Connected factor trends' : "Today’s factors"}</h2>
+            <h2>{isVip ? 'Your 30-day patterns' : "Today’s factors"}</h2>
             <p className="factor-intro">
               {isVip
-                ? 'Compare today with your recent records and spot useful patterns.'
-                : 'Values entered in today’s check-in.'}
+                ? 'Today compared with your recent check-ins.'
+                : 'The values you entered today.'}
             </p>
           </div>
           <span className={isVip ? 'plan-badge vip' : 'plan-badge'}>
-            {isVip ? 'VIP · 30 days' : 'Basic · Today'}
+            {isVip ? 'VIP · 30-day view' : 'Basic · Today only'}
           </span>
         </div>
         <div className="factor-grid">
           {[
-            [Moon, 'Sleep', `${sleep} hr`, isVip ? '30-day avg 6.8 hr' : 'Entered today', isVip ? '+0.2 hr' : 'Manual'],
-            [Dumbbell, 'Activity', `${activityMinutes} min`, isVip ? '126 of 150 min weekly goal' : 'Entered today', isVip ? '84%' : 'Manual'],
-            [Utensils, 'Meals', meals, isVip ? '5 of 7 balanced days' : 'Entered today', isVip ? 'This week' : 'Manual'],
+            [Moon, 'Sleep', `${sleep} hr`, isVip ? `30-day average: ${sleepAverage.toFixed(1)} hr` : 'Saved in today’s check-in', isVip ? sleepDifferenceLabel : 'Manual entry'],
+            [Dumbbell, 'Activity', `${activityMinutes} min`, isVip ? `This week: ${weeklyActivity} / 150 min` : 'Saved in today’s check-in', isVip ? `${activityProgress}% of goal` : 'Manual entry'],
+            [Utensils, 'Meals', meals, isVip ? `Balanced meals: ${balancedMealDays} of 7 days` : 'Saved in today’s check-in', isVip ? '7-day history' : 'Manual entry'],
           ].map(([Icon, label, value, detail, status]) => {
             const FactorIcon = Icon as typeof Moon;
             return (
@@ -289,7 +297,9 @@ export default function Page() {
                 <strong>{String(value)}</strong>
                 <span>{String(detail)}</span>
                 {isVip && label === 'Activity' && (
-                  <div className="mini-progress" aria-label="84% of weekly activity goal completed"><i /></div>
+                  <div className="mini-progress" aria-label={`${activityProgress}% of weekly activity goal completed`}>
+                    <i style={{ width: `${activityProgress}%` }} />
+                  </div>
                 )}
               </div>
             );
@@ -299,9 +309,9 @@ export default function Page() {
           <div className="factor-insight">
             <span><TrendingUp size={19} /></span>
             <div>
-              <small>PATTERN IN YOUR RECORDS</small>
-              <strong>Fatigue appeared more often after nights with less than 6 hours of sleep.</strong>
-              <p>Based on your last 30 days of check-ins. This is an observation, not a diagnosis.</p>
+              <small>A PATTERN WE NOTICED</small>
+              <strong>You recorded fatigue more often after sleeping less than 6 hours.</strong>
+              <p>Based on your last 30 days. This may help you prepare for a visit, but it is not a diagnosis.</p>
             </div>
           </div>
         )}
