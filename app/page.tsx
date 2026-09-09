@@ -204,37 +204,59 @@ export default function Page() {
       ),
     );
   };
+  const weeklyCheckIns = [
+    { day: 'Mon', date: 'Aug 31', recorded: true },
+    { day: 'Tue', date: 'Sep 1', recorded: true },
+    { day: 'Wed', date: 'Sep 2', recorded: false },
+    { day: 'Thu', date: 'Sep 3', recorded: true },
+    { day: 'Fri', date: 'Sep 4', recorded: true },
+    { day: 'Sat', date: 'Sep 5', recorded: true },
+    { day: 'Sun', date: 'Sep 6', recorded: false },
+  ];
+  const completedCheckIns = weeklyCheckIns.filter((item) => item.recorded).length;
   const trendsPanel = (
     <div className="feature-stack">
       <section className="trend-card">
         <div className="card-heading">
           <span>
-            <small>{isVip ? '30-DAY VIEW' : '7-DAY PREVIEW'}</small>
-            <strong>Tongue check-in trend</strong>
+            <small>WEEKLY RECORD COMPLETION</small>
+            <strong>{completedCheckIns} of 7 daily check-ins completed</strong>
           </span>
           <TrendingUp size={21} />
         </div>
-        <div className="trend-chart" aria-label="Check-in consistency chart">
-          {[42, 66, 54, 83, 72, 91, 78, 88, 62, 94, 84, 96].map(
-            (height, index) => (
-              <span
-                key={index}
-                className={!isVip && index > 5 ? 'locked-bar' : ''}
-                style={{ height: `${height}%` }}
-              />
-            ),
-          )}
+        <div className="completion-legend" aria-label="Chart legend">
+          <span><i className="recorded" /> Saved check-in</span>
+          <span><i /> No record</span>
         </div>
-        <div className="trend-axis">
-          <span>Aug 7</span>
-          <span>Sep 5</span>
+        <div className="completion-chart" aria-label={`${completedCheckIns} of 7 daily check-ins completed`}>
+          {weeklyCheckIns.map((item) => (
+            <div key={item.day} className={item.recorded ? 'recorded' : 'missed'}>
+              <span className="completion-box" aria-label={`${item.day}: ${item.recorded ? 'check-in saved' : 'no record'}`}>
+                {item.recorded ? <Check size={18} /> : <span>—</span>}
+              </span>
+              <strong>{item.day}</strong>
+              <small>{item.date}</small>
+            </div>
+          ))}
         </div>
-        <p>
-          {isVip
-            ? 'Your records are most consistent on mornings after seven or more hours of sleep.'
-            : 'Basic shows a short preview. VIP adds longer, more detailed longitudinal trends.'}
-        </p>
+        <p>Each green box means one daily check-in was saved. Grey means no entry. This chart measures recording consistency, not health.</p>
       </section>
+
+      {isVip && (
+        <section className="monthly-card">
+          <div>
+            <small>LAST 30 DAYS</small>
+            <strong>82%</strong>
+            <span>check-in completion</span>
+          </div>
+          <div className="month-dots" aria-label="25 of 30 daily check-ins completed">
+            {Array.from({ length: 30 }, (_, index) => (
+              <i key={index} className={[3, 8, 16, 22, 27].includes(index) ? 'missed' : ''} />
+            ))}
+          </div>
+          <p>25 saved check-ins · 5 days with no record</p>
+        </section>
+      )}
 
       <section className="integration-card">
         <div className="sectionhead compact">
