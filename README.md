@@ -1,6 +1,6 @@
 # TongueCare · Tongue Demo
 
-An interactive **Basic-edition UI prototype** for a patient-facing tongue photo and daily health journal app.
+An interactive patient-facing UI prototype that demonstrates both **Basic** and **VIP** TongueCare experiences.
 
 This course project focuses on interface design, page structure, and user flows. It presents a mobile app through a responsive website. No model training, medical dataset, or backend database is required.
 
@@ -12,12 +12,12 @@ The hosted demo currently allows access only to the project owner. Classmates an
 
 ## Implemented screens
 
-| Screen  | Features                                                                                       |
-| ------- | ---------------------------------------------------------------------------------------------- |
-| Home    | Daily check-in, weekly activity, latest entry, and photo tips                                  |
-| Capture | Simulated capture, local image selection, feelings and notes, and simulated AI Doctor guidance |
-| Journal | Entry history, entry details, photo previews, and saved AI guidance                            |
-| Profile | Basic membership, journal shortcut, reminder demo switch, privacy information, and help        |
+| Screen  | Features |
+| ------- | -------- |
+| Home | Daily check-in, weekly activity, latest entry, trends shortcut, Smart Visit Prep, and photo tips |
+| Capture | Guided capture, automatic quality feedback, recapture, feelings, notes, weight, symptoms, medication, sleep, activity, meals, and simulated AI Doctor guidance |
+| Journal | Entry history, Basic/VIP longitudinal trends, daily-factor integration, clinician goals, test-report comparison, and Smart Visit Prep |
+| Profile | Basic/VIP preview switch, hospital care-plan connection, reminders, privacy information, and help |
 
 The interface uses a teal palette, rounded cards, and bottom navigation. Desktop browsers display a phone-shaped preview; smaller screens use the available width. All interface text and example entries are in English.
 
@@ -28,7 +28,8 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 3. Choose how you feel and optionally add notes about sleep, meals, or your day.
 4. Select **Get AI Doctor advice** and review the personalized demo guidance.
 5. Save the guidance, open **Journal**, then select the new entry to view its details.
-6. Open **Profile** to explore the Basic plan and feature information.
+6. Open **Journal**, then switch between **Entries**, **Trends**, and **Visit prep**.
+7. Open **Profile** to switch between the Basic and VIP UI previews or connect the simulated hospital care plan.
 
 ## Demo scope
 
@@ -39,18 +40,20 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 - The reminder switch demonstrates a setting; it does not send notifications.
 - The AI Doctor experience uses local, prewritten demo guidance based on the selected feeling. It does not analyze the image, call an AI model, or provide a medical diagnosis.
 - There is no real account login, payment processing, model training, medical report generation, or electronic medical record integration.
-- VIP and hospital linking currently display benefit information only. They do not activate memberships, charge users, or share data.
+- Basic and VIP can be switched locally for demonstration. This does not activate a membership or charge the user.
+- Hospital connection, clinical summaries, review flags, test reports, and clinician goals use simulated data and do not connect to an EHR.
 
-## Planned product scope
+## Basic and VIP feature model
 
-The following are product concepts and **are not implemented**:
-
-| User type          | Planned benefits                                                                                          |
-| ------------------ | --------------------------------------------------------------------------------------------------------- |
-| Basic              | Free daily check-ins and entry history                                                                    |
-| Paid VIP           | Entry comparisons, trends, full reports, and exports                                                      |
-| Hospital care plan | Hospital invitation, full access during treatment, and sharing with a linked doctor after patient consent |
-| Doctor             | Review home uploads through an electronic medical record entry point; manage care plans and invitations   |
+| Capability | Basic | VIP |
+| ---------- | ----- | --- |
+| Guided tongue-image capture and automatic quality checks | Included | Included |
+| Basic longitudinal records, weight, symptoms, medication, tests, and reminders | Included | Included |
+| Longer detailed trends and sleep, activity, and nutrition integration | Limited | Included |
+| Personalized support around clinician goals | Locked | Included |
+| Comparison across multiple test reports | Locked | Included |
+| Smart Visit Prep | Basic summary | Personalized brief with editable questions |
+| Clinical summary and review flag | Included in a hospital project | Included in a hospital project |
 
 After hospital-sponsored access ends, users may return to Basic or choose to purchase VIP. Paid membership and hospital care relationships are managed separately.
 
@@ -130,7 +133,7 @@ Tongue_demo/
 - **App name and page title:** `app/layout.tsx` and `app/page.tsx`.
 - **Colors, spacing, and phone layout:** `app/globals.css`.
 - **Example entries and interface text:** the `initial` array and screen content in `app/page.tsx`.
-- **VIP, hospital care, or doctor features:** extend the existing interface with the corresponding flows.
+- **Plan and care-plan demo state:** update the state and feature panels in `app/page.tsx`.
 
 `.openai/hosting.json` links to the current demo site and contains no access credentials. It does not need changes for local development. Use your own hosting project configuration for an independent deployment. Uploading code to GitHub does not automatically publish the demo.
 
