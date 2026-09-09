@@ -16,7 +16,7 @@ The hosted demo currently allows access only to the project owner. Classmates an
 | ------- | -------- |
 | Home | Daily check-in, weekly activity, latest entry, trends shortcut, Smart Visit Prep, and photo tips |
 | Capture | Guided capture, automatic quality feedback, recapture, feelings, notes, weight, symptoms, medication, sleep, activity, meals, and simulated AI Doctor guidance |
-| Journal | Entry history, Basic/VIP longitudinal trends, daily-factor integration, clinician goals, test-report comparison, and Smart Visit Prep |
+| Journal | Entry history, clearly labelled weekly check-in completion, VIP 30-day completion, daily-factor integration, clinician goals, test-report comparison, and Smart Visit Prep |
 | Profile | Basic/VIP preview switch, hospital care-plan connection, reminders, privacy information, and help |
 
 The interface uses a teal palette, rounded cards, and bottom navigation. Desktop browsers display a phone-shaped preview; smaller screens use the available width. All interface text and example entries are in English.
@@ -49,7 +49,8 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 | ---------- | ----- | --- |
 | Guided tongue-image capture and automatic quality checks | Included | Included |
 | Basic longitudinal records, weight, symptoms, medication, tests, and reminders | Included | Included |
-| Longer detailed trends and sleep, activity, and nutrition integration | Limited | Included |
+| Recording consistency | 7-day completion | 30-day completion plus detailed context |
+| Sleep, activity, and nutrition integration | Limited | Included |
 | Personalized support around clinician goals | Locked | Included |
 | Comparison across multiple test reports | Locked | Included |
 | Smart Visit Prep | Basic summary | Personalized brief with editable questions |
