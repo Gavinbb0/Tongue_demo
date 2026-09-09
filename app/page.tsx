@@ -370,14 +370,14 @@ export default function Page() {
             {isVip ? 'VIP' : 'Basic'}
           </span>
         </div>
-        <div className="summary-grid">
+        <div className={`summary-grid ${isVip ? '' : 'basic-summary-grid'}`}>
           <div>
             <small>{isVip ? '30-day check-ins' : 'Records'}</small>
             <strong>{isVip ? '25 / 30 days' : records.length}</strong>
           </div>
           <div><small>Latest feeling</small><strong>{records[0]?.feeling ?? '—'}</strong></div>
           <div><small>Medication changes</small><strong>{medication || 'None noted'}</strong></div>
-          <div><small>Next review</small><strong>Sep 18</strong></div>
+          {isVip && <div><small>Next review</small><strong>Sep 18</strong></div>}
         </div>
         {isVip && (
           <div className="vip-brief">
