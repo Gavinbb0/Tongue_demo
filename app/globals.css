@@ -1539,6 +1539,9 @@ textarea {
 .summary-grid div:nth-child(n+3) {
   border-top: 1px solid #e5ece8;
 }
+.summary-grid.basic-summary-grid div:nth-child(3) {
+  grid-column: 1 / -1;
+}
 .summary-grid small,
 .summary-grid strong {
   display: block;
