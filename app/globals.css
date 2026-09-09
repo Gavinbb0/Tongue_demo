@@ -1564,6 +1564,111 @@ textarea {
   line-height: 1.55;
   margin-top: 12px;
 }
+.vip-brief {
+  margin-top: 13px;
+  padding: 13px;
+  border: 1px solid #e4d7b8;
+  border-radius: 15px;
+  background: #fcf8ef;
+}
+.vip-brief-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8c651f;
+  margin-bottom: 10px;
+}
+.vip-brief-title > span,
+.vip-brief-title strong,
+.vip-brief-title small {
+  display: block;
+}
+.vip-brief-title strong {
+  font-size: 12px;
+}
+.vip-brief-title small {
+  color: #9c8d6c;
+  font-size: 9px;
+  margin-top: 2px;
+}
+.vip-brief-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.vip-brief-grid > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+  padding: 9px;
+  border-radius: 11px;
+  background: #fff;
+  color: #527267;
+}
+.vip-brief-grid svg {
+  color: #188672;
+  flex: none;
+  margin-top: 1px;
+}
+.vip-brief-grid span,
+.vip-brief-grid small,
+.vip-brief-grid strong,
+.vip-brief-grid em {
+  display: block;
+  min-width: 0;
+}
+.vip-brief-grid small {
+  color: #8b9a94;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+.vip-brief-grid strong {
+  color: #31594d;
+  font-size: 10px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.vip-brief-grid em {
+  color: #85958e;
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+.vip-brief .personalized-note {
+  margin-top: 9px;
+}
+.basic-brief-limit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px dashed #d9dfdc;
+  border-radius: 12px;
+  background: #f7f9f8;
+  color: #73877e;
+  text-align: left;
+}
+.basic-brief-limit > span {
+  flex: 1;
+}
+.basic-brief-limit strong,
+.basic-brief-limit small {
+  display: block;
+}
+.basic-brief-limit strong {
+  color: #526a60;
+  font-size: 11px;
+}
+.basic-brief-limit small {
+  font-size: 9px;
+  line-height: 1.45;
+  margin-top: 2px;
+}
 .question-edit,
 .question-readonly {
   display: flex;
@@ -1708,6 +1813,42 @@ textarea {
   gap: 8px;
   margin-bottom: 12px;
 }
+.report-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 13px;
+  padding: 12px;
+  border: 1px dashed #87b5a6;
+  border-radius: 12px;
+  background: #f1f8f5;
+  color: #087f70;
+  cursor: pointer;
+}
+.report-upload > span {
+  flex: 1;
+}
+.report-upload strong,
+.report-upload small {
+  display: block;
+}
+.report-upload strong {
+  color: #31594d;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.report-upload small {
+  color: #7f9189;
+  font-size: 9px;
+  margin-top: 2px;
+}
+.report-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
 .report-comparison div {
   border: 1px solid #e1e9e5;
   border-radius: 12px;
@@ -1737,6 +1878,10 @@ textarea {
 .report-comparison span.review {
   color: #9b5b25;
   background: #fff0e2;
+}
+.report-comparison span.new-report {
+  color: #176eaa;
+  background: #e8f3fb;
 }
 .visit-summary-sheet {
   background: #f2f7f4;
