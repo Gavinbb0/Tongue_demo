@@ -50,7 +50,7 @@ The interface uses a teal palette, rounded cards, and bottom navigation. Desktop
 | Guided tongue-image capture and automatic quality checks | Included | Included |
 | Basic longitudinal records, weight, symptoms, medication, tests, and reminders | Included | Included |
 | Recording consistency | 7-day completion | 30-day completion plus detailed context |
-| Sleep, activity, and nutrition integration | Limited | Included |
+| Sleep, activity, and meal factors | Today’s manually entered values | 30-day averages, weekly goals, and relationships between factors |
 | Personalized support around clinician goals | Locked | Included |
 | Comparison across multiple test reports | Locked | Included |
 | Smart Visit Prep | Basic summary | Personalized brief with editable questions |
