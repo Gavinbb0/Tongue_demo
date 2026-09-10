@@ -1,1355 +1,249 @@
 'use client';
-import { useState } from 'react';
+
 import Image from 'next/image';
+import { useMemo, useState } from 'react';
 import {
-  Activity,
-  Home,
-  Camera,
-  FolderHeart,
-  UserRound,
-  Bell,
-  ChevronRight,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  ImagePlus,
-  ScanLine,
-  BookOpen,
-  Crown,
-  Building2,
-  ShieldCheck,
-  CircleHelp,
-  Wifi,
-  BatteryFull,
-  Signal,
-  CalendarDays,
-  FileImage,
-  Sparkles,
-  Stethoscope,
-  LoaderCircle,
-  TrendingUp,
-  ClipboardList,
-  LockKeyhole,
-  Moon,
-  Utensils,
-  Dumbbell,
-  Weight,
-  Pill,
-  FlaskConical,
-  Flag,
-  Target,
-  RefreshCw,
-  FileText,
-  Plus,
+  Activity, ArrowLeft, BarChart3, BatteryFull, Bell, Building2, CalendarDays, Camera,
+  Check, CheckCircle2, ChevronRight, CircleHelp, ClipboardCheck, Crown,
+  FileHeart, FileImage, FlaskConical, FolderHeart, Home, ImagePlus, Info,
+  Keyboard, LockKeyhole, Moon, Pill, ScanFace, ShieldCheck, Signal, Sparkles,
+  TrendingUp, Upload, UserRound, Utensils, Weight, Wifi,
 } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-type Entry = {
-  id: number;
-  date: string;
-  time: string;
-  feeling: string;
-  note: string;
-  image?: string;
-  advice?: string[];
-  health?: {
-    weight: string;
-    symptoms: string;
-    medication: string;
-    sleep: string;
-    activity: string;
-    meals: string;
-  };
-};
-type JournalView = 'entries' | 'trends' | 'visit';
-const initial: Entry[] = [
-  {
-    id: 1,
-    date: 'Sep 4',
-    time: '08:32',
-    feeling: 'Feeling good',
-    note: 'Logged this morning after waking up.',
-  },
-  {
-    id: 2,
-    date: 'Sep 3',
-    time: '08:46',
-    feeling: 'A little tired',
-    note: 'Went to bed late last night.',
-  },
-  {
-    id: 3,
-    date: 'Sep 2',
-    time: '09:15',
-    feeling: 'Feeling good',
-    note: 'Daily check-in.',
-  },
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+type WindowName = 'capture' | 'metrics' | 'daily' | null;
+type ReportName = 'record' | 'single' | 'monthly' | 'visit' | 'hospital' | 'privacy' | 'help' | null;
+type CaptureStep = 'capture' | 'review' | 'analyzing' | 'result';
+type HealthEntry = { id: number; date: string; kind: 'Tongue' | 'Metrics' | 'Daily'; title: string; detail: string };
+
+const starterEntries: HealthEntry[] = [
+  { id: 1, date: '9月9日 · 08:28', kind: 'Tongue', title: '晨间舌象记录', detail: '照片质量合格 · 基础分析已完成' },
+  { id: 2, date: '9月8日 · 20:10', kind: 'Daily', title: '每日生活记录', detail: '睡眠 6.5 小时 · 活动 32 分钟 · 用药无变化' },
+  { id: 3, date: '9月6日 · 09:02', kind: 'Metrics', title: '体检指标', detail: 'ALT、AST、GGT 和 TG 已更新' },
 ];
+
+const tongueFeatures = [
+  ['舌色', '淡红', '处于近期记录范围内'],
+  ['舌苔', '薄白', '较上月稍淡'],
+  ['舌体形态', '基本规则', '连续记录中未见明显变化'],
+  ['湿润度', '适中', '近期记录较稳定'],
+  ['裂纹与齿痕', '轻微齿痕', '建议继续保持相同条件拍摄'],
+];
+
+const metricDefinitions = [
+  { key: 'bmi', name: '身体质量指数', short: 'BMI', unit: 'kg/m²', range: '18.5–23.9', help: '根据身高和体重计算，用来大致了解体重状况。' },
+  { key: 'alt', name: '丙氨酸氨基转移酶', short: 'ALT', unit: 'U/L', range: '7–40', help: '血液中的一种酶，通常与其他检查一起了解肝脏情况。' },
+  { key: 'ast', name: '天门冬氨酸氨基转移酶', short: 'AST', unit: 'U/L', range: '13–35', help: '存在于肝脏、心脏和肌肉等组织，需要结合其他指标理解。' },
+  { key: 'ggt', name: 'γ-谷氨酰转移酶', short: 'GGT', unit: 'U/L', range: '10–40', help: '常用于了解肝脏和胆道情况，单项结果不能判断具体原因。' },
+  { key: 'tg', name: '甘油三酯', short: 'TG', unit: 'mmol/L', range: '0.3–1.7', help: '血液中的一种脂肪，通常是血脂检查的一部分。' },
+] as const;
+
 export default function Page() {
-  const [tab, setTab] = useState('home'),
-    [modal, setModal] = useState(''),
-    [records, setRecords] = useState(initial),
-    [selected, setSelected] = useState<Entry | null>(null),
-    [captured, setCaptured] = useState(false),
-    [photo, setPhoto] = useState(''),
-    [feeling, setFeeling] = useState('Feeling good'),
-    [note, setNote] = useState(''),
-    [saved, setSaved] = useState(false),
-    [reminder, setReminder] = useState(false),
-    [plan, setPlan] = useState<'basic' | 'vip'>('basic'),
-    [journalView, setJournalView] = useState<JournalView>('entries'),
-    [hospitalLinked, setHospitalLinked] = useState(false),
-    [weightValue, setWeightValue] = useState('68.4'),
-    [symptoms, setSymptoms] = useState(''),
-    [medication, setMedication] = useState(''),
-    [sleep, setSleep] = useState('7.0'),
-    [activityMinutes, setActivityMinutes] = useState('32'),
-    [meals, setMeals] = useState('Balanced'),
-    [reportFileName, setReportFileName] = useState(''),
-    [visitQuestions, setVisitQuestions] = useState([
-      'Could my recent fatigue be related to my sleep pattern?',
-      'Should I change how often I record symptoms?',
-    ]);
+  const [tab, setTab] = useState('home');
+  const [windowName, setWindowName] = useState<WindowName>(null);
+  const [reportName, setReportName] = useState<ReportName>(null);
+  const [plan, setPlan] = useState<'basic' | 'vip'>('basic');
+  const [reminder, setReminder] = useState(true);
+  const [hospitalLinked, setHospitalLinked] = useState(false);
+  const [photo, setPhoto] = useState('');
+  const [captureStep, setCaptureStep] = useState<CaptureStep>('capture');
+  const [metricsStep, setMetricsStep] = useState<'choose' | 'upload' | 'manual' | 'confirm'>('choose');
+  const [labFileName, setLabFileName] = useState('');
+  const [entries, setEntries] = useState(starterEntries);
+  const [selectedEntry, setSelectedEntry] = useState<HealthEntry | null>(null);
+  const [done, setDone] = useState({ capture: false, metrics: false, daily: false });
+  const [metrics, setMetrics] = useState({ bmi: '23.7', alt: '38', ast: '29', ggt: '42', tg: '1.6' });
+  const [daily, setDaily] = useState({ sleep: '7.0', activity: '35', meals: '均衡', medication: '按计划服用', alcohol: '无', symptoms: '没有新症状' });
   const isVip = plan === 'vip';
-  const sleepAverage = 6.8;
-  const sleepToday = Number.parseFloat(sleep);
-  const sleepDifference = Number.isFinite(sleepToday) ? sleepToday - sleepAverage : 0;
-  const sleepDifferenceLabel = `${sleepDifference >= 0 ? '+' : ''}${sleepDifference.toFixed(1)} hr vs avg`;
-  const activityToday = Number.parseInt(activityMinutes, 10);
-  const weeklyActivity = 94 + (Number.isFinite(activityToday) ? activityToday : 0);
-  const activityProgress = Math.min(100, Math.round((weeklyActivity / 150) * 100));
-  const balancedMealDays = meals === 'Balanced' ? 5 : 4;
-  const advice =
-    feeling === 'A little tired'
-      ? [
-          'Prioritize rest and keep a regular sleep schedule tonight.',
-          'Drink water regularly and choose balanced, easy-to-digest meals.',
-          'Keep tracking how you feel; seek professional care if fatigue persists or worsens.',
-        ]
-      : feeling === 'Feeling unwell'
-        ? [
-            'Rest, stay hydrated, and avoid strenuous activity for now.',
-            'Monitor your symptoms and add specific changes to your next check-in.',
-            'Contact a healthcare professional promptly if symptoms are severe, unusual, or getting worse.',
-          ]
-        : [
-            'Keep your usual hydration and balanced meal routine.',
-            'Continue daily check-ins at a similar time and under similar lighting.',
-            'Pay attention to meaningful changes in how you feel over the next few days.',
-          ];
-  const openRecord = (r: Entry) => {
-    setSelected(r);
-    setModal('record');
+  const todayLabel = useMemo(() => new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date(2026, 8, 10)), []);
+
+  const addEntry = (kind: HealthEntry['kind'], title: string, detail: string) => setEntries((current) => [
+    { id: Date.now(), date: '9月10日 · 刚刚', kind, title, detail }, ...current,
+  ]);
+
+  const loadPhoto = (file?: File) => {
+    if (!file || file.size > 10 * 1024 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhoto(String(reader.result ?? ''));
+      setCaptureStep('review');
+    };
+    reader.readAsDataURL(file);
   };
-  const save = () => {
-    setRecords([
-      {
-        id: Date.now(),
-        date: 'Sep 5',
-        time: new Date().toLocaleTimeString('en-GB', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        feeling,
-        note: note || 'No notes added',
-        image: photo,
-        advice,
-        health: {
-          weight: weightValue,
-          symptoms: symptoms || 'No new symptoms',
-          medication: medication || 'No medication changes',
-          sleep,
-          activity: activityMinutes,
-          meals,
-        },
-      },
-      ...records,
-    ]);
-    setSaved(true);
-    setCaptured(false);
-    setPhoto('');
-    setNote('');
-    setSymptoms('');
-    setMedication('');
-    setModal('success');
+
+  const analyzeCapture = () => {
+    setCaptureStep('analyzing');
+    window.setTimeout(() => setCaptureStep('result'), 1200);
   };
-  const requestAdvice = () => {
-    setModal('analyzing');
-    window.setTimeout(() => setModal('ai'), 1100);
+
+  const saveCapture = () => {
+    setDone((state) => ({ ...state, capture: true }));
+    addEntry('Tongue', '今日舌象记录', '照片质量合格 · 智能分析报告已完成');
+    setWindowName(null);
+    setReportName('single');
   };
-  const row = (r: Entry) => (
-    <button className="record" key={r.id} onClick={() => openRecord(r)}>
-      <span className="record-icon">
-        <FileImage size={23} />
-      </span>
-      <span className="record-body">
-        <strong>
-          {r.date}{' '}
-          <span className="pill">
-            {r.advice ? 'AI guidance' : r.id < 4 ? 'Sample' : 'New entry'}
-          </span>
-        </strong>
-        <small>
-          {r.time} · {r.feeling}
-        </small>
-      </span>
-      <ChevronRight size={17} />
-    </button>
-  );
-  const selectPlan = (nextPlan: 'basic' | 'vip') => {
-    setPlan(nextPlan);
-    setModal('');
+  const saveMetrics = () => {
+    setDone((state) => ({ ...state, metrics: true }));
+    addEntry('Metrics', '体检指标已更新', `BMI ${metrics.bmi} · ALT ${metrics.alt} · AST ${metrics.ast}`);
+    setWindowName(null);
   };
-  const updateQuestion = (index: number, value: string) => {
-    setVisitQuestions((current) =>
-      current.map((question, questionIndex) =>
-        questionIndex === index ? value : question,
-      ),
-    );
+  const saveDaily = () => {
+    setDone((state) => ({ ...state, daily: true }));
+    addEntry('Daily', '今日生活记录', `睡眠 ${daily.sleep} 小时 · 活动 ${daily.activity} 分钟 · ${daily.meals}`);
+    setWindowName(null);
   };
-  const weeklyCheckIns = [
-    { day: 'Mon', date: 'Aug 31', recorded: true },
-    { day: 'Tue', date: 'Sep 1', recorded: true },
-    { day: 'Wed', date: 'Sep 2', recorded: false },
-    { day: 'Thu', date: 'Sep 3', recorded: true },
-    { day: 'Fri', date: 'Sep 4', recorded: true },
-    { day: 'Sat', date: 'Sep 5', recorded: true },
-    { day: 'Sun', date: 'Sep 6', recorded: false },
-  ];
-  const completedCheckIns = weeklyCheckIns.filter((item) => item.recorded).length;
-  const trendsPanel = (
-    <div className="feature-stack">
-      <section className="trend-card">
-        <div className="card-heading">
-          <span>
-            <small>WEEKLY RECORD COMPLETION</small>
-            <strong>{completedCheckIns} of 7 daily check-ins completed</strong>
-          </span>
-          <TrendingUp size={21} />
-        </div>
-        <div className="completion-legend" aria-label="Chart legend">
-          <span><i className="recorded" /> Saved check-in</span>
-          <span><i /> No record</span>
-        </div>
-        <div className="completion-chart" aria-label={`${completedCheckIns} of 7 daily check-ins completed`}>
-          {weeklyCheckIns.map((item) => (
-            <div key={item.day} className={item.recorded ? 'recorded' : 'missed'}>
-              <span className="completion-box" aria-label={`${item.day}: ${item.recorded ? 'check-in saved' : 'no record'}`}>
-                {item.recorded ? <Check size={18} /> : <span>—</span>}
-              </span>
-              <strong>{item.day}</strong>
-              <small>{item.date}</small>
-            </div>
-          ))}
-        </div>
-        <p>Each green box means one daily check-in was saved. Grey means no entry. This chart measures recording consistency, not health.</p>
-      </section>
 
-      {isVip && (
-        <section className="monthly-card">
-          <div>
-            <small>LAST 30 DAYS</small>
-            <strong>82%</strong>
-            <span>check-in completion</span>
-          </div>
-          <div className="month-dots" aria-label="25 of 30 daily check-ins completed">
-            {Array.from({ length: 30 }, (_, index) => (
-              <i key={index} className={[3, 8, 16, 22, 27].includes(index) ? 'missed' : ''} />
-            ))}
-          </div>
-          <p>25 saved check-ins · 5 days with no record</p>
-        </section>
-      )}
-
-      <section className="integration-card">
-        <div className="sectionhead compact">
-          <div>
-            <h2>{isVip ? 'Your 30-day patterns' : "Today’s factors"}</h2>
-            <p className="factor-intro">
-              {isVip
-                ? 'Today compared with your recent check-ins.'
-                : 'The values you entered today.'}
-            </p>
-          </div>
-          <span className={isVip ? 'plan-badge vip' : 'plan-badge'}>
-            {isVip ? 'VIP · 30-day view' : 'Basic · Today only'}
-          </span>
-        </div>
-        <div className="factor-grid">
-          {[
-            [Moon, 'Sleep', `${sleep} hr`, isVip ? `30-day average: ${sleepAverage.toFixed(1)} hr` : 'Saved in today’s check-in', isVip ? sleepDifferenceLabel : 'Manual entry'],
-            [Dumbbell, 'Activity', `${activityMinutes} min`, isVip ? `This week: ${weeklyActivity} / 150 min` : 'Saved in today’s check-in', isVip ? `${activityProgress}% of goal` : 'Manual entry'],
-            [Utensils, 'Meals', meals, isVip ? `Balanced meals: ${balancedMealDays} of 7 days` : 'Saved in today’s check-in', isVip ? '7-day history' : 'Manual entry'],
-          ].map(([Icon, label, value, detail, status]) => {
-            const FactorIcon = Icon as typeof Moon;
-            return (
-              <div className="factor" key={String(label)}>
-                <div className="factor-top">
-                  <FactorIcon size={19} />
-                  <em>{String(status)}</em>
-                </div>
-                <small>{String(label)} today</small>
-                <strong>{String(value)}</strong>
-                <span>{String(detail)}</span>
-                {isVip && label === 'Activity' && (
-                  <div className="mini-progress" aria-label={`${activityProgress}% of weekly activity goal completed`}>
-                    <i style={{ width: `${activityProgress}%` }} />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {isVip && (
-          <div className="factor-insight">
-            <span><TrendingUp size={19} /></span>
-            <div>
-              <small>A PATTERN WE NOTICED</small>
-              <strong>You recorded fatigue more often after sleeping less than 6 hours.</strong>
-              <p>Based on your last 30 days. This may help you prepare for a visit, but it is not a diagnosis.</p>
-            </div>
-          </div>
-        )}
-        {!isVip && (
-          <button className="locked-feature" onClick={() => setModal('vip')}>
-            <LockKeyhole size={18} />
-            <span>
-              <strong>Unlock 30-day comparisons</strong>
-              <small>See averages, goals and relationships between your daily factors.</small>
-            </span>
-            <ChevronRight size={16} />
-          </button>
-        )}
-      </section>
-
-      <button
-        className={isVip ? 'feature-row' : 'feature-row locked'}
-        onClick={() => setModal(isVip ? 'reports' : 'vip')}
-      >
-        <span className="feature-icon"><FlaskConical size={21} /></span>
-        <span>
-          <strong>Compare test reports</strong>
-          <small>{isVip ? `${reportFileName ? 4 : 3} reports ready · Upload available` : 'VIP feature'}</small>
-        </span>
-        {isVip ? <ChevronRight size={17} /> : <LockKeyhole size={16} />}
-      </button>
-
-      <section className={isVip ? 'goal-card' : 'goal-card locked-goal'}>
-        <div className="card-heading">
-          <span>
-            <small>CARE GOAL</small>
-            <strong>Build a consistent morning record</strong>
-          </span>
-          {isVip ? <Target size={22} /> : <LockKeyhole size={18} />}
-        </div>
-        <div className="goal-progress"><span style={{ width: isVip ? '72%' : '28%' }} /></div>
-        <p>
-          {isVip
-            ? 'Goal set with Dr. Chen · 8 of 11 planned check-ins completed.'
-            : 'VIP can turn clinician goals into personalized daily support.'}
-        </p>
-      </section>
-    </div>
-  );
-  const visitPrepPanel = (
-    <div className="feature-stack">
-      <section className="visit-card">
-        <div className="visit-head">
-          <span className="feature-icon"><ClipboardList size={22} /></span>
-          <span>
-            <small>SMART VISIT PREP</small>
-            <strong>{isVip ? 'Personalized visit brief' : 'Basic visit summary'}</strong>
-          </span>
-          <span className={isVip ? 'plan-badge vip' : 'plan-badge'}>
-            {isVip ? 'VIP' : 'Basic'}
-          </span>
-        </div>
-        <div className={`summary-grid ${isVip ? '' : 'basic-summary-grid'}`}>
-          <div>
-            <small>{isVip ? '30-day check-ins' : 'Records'}</small>
-            <strong>{isVip ? '25 / 30 days' : records.length}</strong>
-          </div>
-          <div><small>Latest feeling</small><strong>{records[0]?.feeling ?? '—'}</strong></div>
-          <div><small>Medication changes</small><strong>{medication || 'None noted'}</strong></div>
-          {isVip && <div><small>Next review</small><strong>Sep 18</strong></div>}
-        </div>
-        {isVip && (
-          <div className="vip-brief">
-            <div className="vip-brief-title">
-              <Crown size={17} />
-              <span><strong>Added in your VIP brief</strong><small>Personalized from your recent records</small></span>
-            </div>
-            <div className="vip-brief-grid">
-              <div>
-                <TrendingUp size={17} />
-                <span><small>30-DAY CHANGE</small><strong>25 of 30 check-ins</strong><em>Sleep averaged 6.8 hr</em></span>
-              </div>
-              <div>
-                <Target size={17} />
-                <span><small>CARE GOAL</small><strong>8 of 11 completed</strong><em>Morning record goal</em></span>
-              </div>
-              <div>
-                <FlaskConical size={17} />
-                <span><small>REPORT UPDATE</small><strong>1 item to review</strong><em>Sep 3 follow-up panel</em></span>
-              </div>
-              <div>
-                <Flag size={17} />
-                <span><small>DISCUSS AT VISIT</small><strong>Fatigue after short sleep</strong><em>Pattern from your notes</em></span>
-              </div>
-            </div>
-            <div className="personalized-note">
-              <Sparkles size={17} />
-              <span>Your records suggest a useful question: could shorter sleep be contributing to your fatigue?</span>
-            </div>
-          </div>
-        )}
-        {!isVip && (
-          <button className="basic-brief-limit" onClick={() => setModal('vip')}>
-            <LockKeyhole size={17} />
-            <span>
-              <strong>Basic summary ends here</strong>
-              <small>VIP adds 30-day changes, care goals, report updates and discussion priorities.</small>
-            </span>
-            <ChevronRight size={16} />
-          </button>
-        )}
-      </section>
-
-      <section className="question-card">
-        <div className="sectionhead compact">
-          <div>
-            <h2>Questions for your clinician</h2>
-            <p className="factor-intro">{isVip ? 'Edit or add questions before your visit.' : 'Basic suggestions are read only.'}</p>
-          </div>
-          {isVip ? <span className="plan-badge vip">VIP · Editable</span> : <LockKeyhole size={16} />}
-        </div>
-        {visitQuestions.map((question, index) =>
-          isVip ? (
-            <label className="question-edit" key={index}>
-              <span>{index + 1}</span>
-              <input
-                value={question}
-                aria-label={`Visit question ${index + 1}`}
-                onChange={(event) => updateQuestion(index, event.target.value)}
-              />
-            </label>
-          ) : (
-            <div className="question-readonly" key={index}>
-              <span>{index + 1}</span>{question}
-            </div>
-          ),
-        )}
-        {isVip ? (
-          <button
-            className="add-question"
-            onClick={() => setVisitQuestions((items) => [...items, ''])}
-          >
-            <Plus size={16} /> Add a question
-          </button>
-        ) : (
-          <button className="locked-feature" onClick={() => setModal('vip')}>
-            <LockKeyhole size={18} />
-            <span>
-              <strong>Edit your visit questions</strong>
-              <small>Available with the personalized VIP visit brief.</small>
-            </span>
-            <ChevronRight size={16} />
-          </button>
-        )}
-      </section>
-
-      <section className="clinical-card">
-        <div className="card-heading">
-          <span>
-            <small>HOSPITAL CARE PROJECT</small>
-            <strong>Clinical summary & review flag</strong>
-          </span>
-          <Flag size={20} />
-        </div>
-        {hospitalLinked ? (
-          <>
-            <p>Shared with Dr. Chen · Latest record awaiting review.</p>
-            <span className="review-flag"><Flag size={14} /> Review requested</span>
-          </>
-        ) : (
-          <>
-            <p>Available in both Basic and VIP when you join a hospital care project and consent to sharing.</p>
-            <button className="secondary compact-button" onClick={() => setModal('hospital')}>
-              Connect a hospital
-            </button>
-          </>
-        )}
-      </section>
-
-      <button className="primary" onClick={() => setModal('visitSummary')}>
-        <FileText size={18} /> Open visit summary
-      </button>
-    </div>
-  );
   return (
     <main className="stage">
       <header className="brandbar">
-        <div className="brand">
-          <span className="logo">
-            <Activity size={23} />
-          </span>
-          TongueCare <span className={isVip ? 'edition vip' : 'edition'}>{isVip ? 'VIP' : 'Basic'}</span>
-        </div>
-        <div className="plan-preview" aria-label="Preview membership plan">
-          <button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>Basic</button>
-          <button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}><Crown size={13} /> VIP</button>
-        </div>
+        <div className="brand"><span className="logo"><Activity size={22} /></span><span>舌康智能检测</span><span className={isVip ? 'edition vip' : 'edition'}>{isVip ? '高级版' : '基础版'}</span></div>
+        <div className="plan-preview" aria-label="会员版本预览"><button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>基础版</button><button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}><Crown size={13} /> 高级版</button></div>
       </header>
+
       <div className="phone">
-        <div className="status">
-          <span>9:41</span>
-          <span className="status-icons">
-            <Signal size={14} />
-            <Wifi size={14} />
-            <BatteryFull size={19} />
-          </span>
-        </div>
-        <Tabs
-          className="nav-wrap"
-          value={tab}
-          onValueChange={(v) => setTab(String(v))}
-        >
-          <div className="content">
-            <TabsContent value="home" className="page-panel">
-              <div className="topline">
-                <span className="eyebrow">SATURDAY, SEP 5</span>
-                <button
-                  className="iconbutton"
-                  aria-label="Notifications"
-                  onClick={() => setModal('notifications')}
-                >
-                  <Bell size={18} />
-                </button>
-              </div>
-              <h1>
-                Good morning, Alex <span style={{ fontSize: 22 }}>☀</span>
-              </h1>
-              <p className="muted welcome">
-                A minute for you. A record of today.
-              </p>
-              <section className="hero">
-                <div className="hero-head">
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: '#c3eac6',
-                    }}
-                  />
-                  {saved
-                    ? 'Today’s check-in complete'
-                    : 'Ready for today’s check-in'}
-                </div>
-                <h2>
-                  {saved
-                    ? 'Every check-in counts'
-                    : 'A small step for your health'}
-                </h2>
-                <p>
-                  {saved
-                    ? 'Your entry is now in your journal'
-                    : 'Capture your tongue. Keep track of your day.'}
-                </p>
-                <button
-                  className="primary"
-                  onClick={() => setTab(saved ? 'archive' : 'capture')}
-                >
-                  <Camera size={18} />
-                  {saved ? 'View today’s entry' : 'Start today’s check-in'}
-                  <ArrowRight size={17} style={{ marginLeft: 'auto' }} />
-                </button>
+        <div className="statusbar"><span>9:41</span><span><Signal size={14} /><Wifi size={14} /><BatteryFull size={19} /></span></div>
+        <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="app-shell">
+          <div className="screen">
+            <TabsContent value="home" className="page">
+              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>舌象智能检测</h1></div><button className="icon-button" aria-label="通知"><Bell size={19} /></button></div>
+              <section className={done.capture ? 'tongue-focus complete' : 'tongue-focus'}>
+                <div className="tongue-focus-top"><span className="focus-icon">{done.capture ? <CheckCircle2 size={30} /> : <ScanFace size={32} />}</span><span className="focus-status">{done.capture ? '今日已完成' : '建议晨起、进食前拍摄'}</span></div>
+                <h2>{done.capture ? '今日舌象已完成分析' : '拍摄舌象，获取智能分析'}</h2>
+                <p>约 2 分钟完成拍摄。系统将检查照片质量，并识别舌色、舌苔和舌体形态。</p>
+                <div className="focus-steps"><span><i>1</i>引导拍摄</span><span><i>2</i>智能分析</span><span><i>3</i>查看报告</span></div>
+                <button className="focus-action" onClick={() => { setCaptureStep(photo ? 'review' : 'capture'); setWindowName('capture'); }}><Camera size={19} />{done.capture ? '再次检测' : '开始舌象检测'}<ChevronRight size={18} /></button>
               </section>
-              <div className="week">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
-                  (d, i) => (
-                    <div
-                      key={d}
-                      className={
-                        'day ' +
-                        (i >= 2 && i <= 4 ? 'done ' : '') +
-                        (i === 5 ? 'today' : '')
-                      }
-                    >
-                      <small>{d}</small>
-                      <span>
-                        {(i >= 2 && i <= 4) || (i === 5 && saved) ? (
-                          <Check size={14} />
-                        ) : i + 31 > 31 ? (
-                          i
-                        ) : (
-                          i + 31
-                        )}
-                      </span>
-                    </div>
-                  ),
-                )}
-              </div>
-              <div className="sectionhead">
-                <h2>Latest entry</h2>
-                <button
-                  className="textbutton"
-                  onClick={() => setTab('archive')}
-                >
-                  All entries
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-              {row(records[0])}
-              <div className="home-feature-grid">
-                <button
-                  className="home-feature"
-                  onClick={() => {
-                    setJournalView('trends');
-                    setTab('archive');
-                  }}
-                >
-                  <TrendingUp size={20} />
-                  <span><strong>Trends</strong><small>{isVip ? '30-day insights' : '7-day preview'}</small></span>
-                  <ChevronRight size={15} />
-                </button>
-                <button
-                  className="home-feature"
-                  onClick={() => {
-                    setJournalView('visit');
-                    setTab('archive');
-                  }}
-                >
-                  <ClipboardList size={20} />
-                  <span><strong>Visit prep</strong><small>{isVip ? 'Personalized brief' : 'Basic summary'}</small></span>
-                  <ChevronRight size={15} />
-                </button>
-              </div>
-              <div className="sectionhead">
-                <h2>Quick tips</h2>
-                <span className="eyebrow" style={{ fontSize: 10 }}>
-                  LITTLE THINGS MATTER
-                </span>
-              </div>
-              <button className="learn" onClick={() => setModal('guide')}>
-                <span className="learn-icon">
-                  <BookOpen size={28} strokeWidth={1.4} />
-                </span>
-                <span>
-                  <strong>3 tips for a clearer photo</strong>
-                  <small>Make every photo count · 1 min read</small>
-                </span>
-                <ChevronRight size={16} />
-              </button>
-              <p className="footnote">Small moments of care, day after day.</p>
+              <button className="latest-report" onClick={() => setReportName('single')}><span className="report-symbol"><FileHeart size={21} /></span><span><small>最近一次 · 9月9日</small><strong>查看舌象智能分析报告</strong><em>舌苔较上次稍淡，整体处于近期记录范围</em></span><ChevronRight size={18} /></button>
+              <details className="supporting-info">
+                <summary><span><strong>辅助信息</strong><small>帮助理解舌象变化的背景，可选择填写</small></span><ChevronRight size={18} /></summary>
+                <div className="supporting-actions">
+                  <button onClick={() => { setMetricsStep('choose'); setWindowName('metrics'); }}><span><FlaskConical size={18} /></span><div><strong>体检指标</strong><small>{done.metrics ? '今日已更新' : '上传化验单或手动填写'}</small></div><ChevronRight size={16} /></button>
+                  <button onClick={() => setWindowName('daily')}><span><ClipboardCheck size={18} /></span><div><strong>生活记录</strong><small>{done.daily ? '今日已记录' : '睡眠、饮食、活动等'}</small></div><ChevronRight size={16} /></button>
+                </div>
+              </details>
+              <button className="month-preview" onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div><span className="eyebrow">30天舌象趋势</span><strong>观察舌象的连续变化</strong><p>{isVip ? '对比舌色、舌苔与舌体形态的变化。' : '高级版可查看连续舌象趋势报告。'}</p></div><TrendingUp size={25} /></button>
             </TabsContent>
-            <TabsContent value="capture" className="page-panel">
-              <span className="eyebrow">CAPTURE YOUR DAY</span>
-              <h1 className="page-title">Your daily check-in</h1>
-              <p className="subtitle">
-                One photo. Your own daily health journal.
-              </p>
-              <div className="steps">
-                <span>
-                  <b>1</b>Photo
-                </span>
-                <span>
-                  <b>2</b>Check in
-                </span>
-                <span>
-                  <b>3</b>AI advice
-                </span>
-              </div>
-              <div className={'capture-area ' + (captured ? 'ready' : '')}>
-                {photo ? (
-                  <Image src={photo} alt="Tongue ready to save" width={390} height={263} unoptimized />
-                ) : captured ? (
-                  <>
-                    <CheckCircle2 size={52} strokeWidth={1.3} />
-                    <strong>Demo photo captured</strong>
-                    <p>Add how you are feeling today</p>
-                  </>
-                ) : (
-                  <>
-                    <ScanLine size={66} strokeWidth={1} />
-                    <strong>Center your tongue in the frame</strong>
-                    <p>Even light · Level camera · Clear photo</p>
-                  </>
-                )}
-              </div>
-              {captured && (
-                <output className="quality-check">
-                  <span className="quality-icon"><CheckCircle2 size={20} /></span>
-                  <span>
-                    <strong>Image quality passed</strong>
-                    <small>Tongue centered · Even light · Clear focus</small>
-                  </span>
-                  <button
-                    aria-label="Retake photo"
-                    onClick={() => {
-                      setCaptured(false);
-                      setPhoto('');
-                    }}
-                  >
-                    <RefreshCw size={15} /> Retake
-                  </button>
-                </output>
-              )}
-              {!captured ? (
-                <>
-                  <button className="primary" onClick={() => setCaptured(true)}>
-                    <Camera size={18} />
-                    Try a demo capture
-                  </button>
-                  <label className="secondary" style={{ cursor: 'pointer' }}>
-                    <ImagePlus size={17} />
-                    Choose a photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 10 * 1024 * 1024) {
-                            setModal('large');
-                            return;
-                          }
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            if (typeof reader.result === 'string') setPhoto(reader.result);
-                            setCaptured(true);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                  <span className="demo-label">
-                    <ShieldCheck size={13} />
-                    Demo: photos stay in this browser session
-                  </span>
-                  <button
-                    className="textbutton"
-                    style={{ margin: '22px auto' }}
-                    onClick={() => setModal('guide')}
-                  >
-                    View photo guide
-                    <ChevronRight size={14} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="textbutton"
-                    onClick={() => {
-                      setCaptured(false);
-                      setPhoto('');
-                    }}
-                  >
-                    Choose another photo
-                  </button>
-                  <span className="fieldlabel">How are you feeling today?</span>
-                  <div className="feelings">
-                    {['Feeling good', 'A little tired', 'Feeling unwell'].map(
-                      (f) => (
-                        <button
-                          key={f}
-                          aria-pressed={f === feeling}
-                          className={f === feeling ? 'selected' : ''}
-                          onClick={() => setFeeling(f)}
-                        >
-                          {f}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                  <label className="fieldlabel" htmlFor="note">
-                    Add a note <span className="muted">(optional)</span>
-                  </label>
-                  <textarea
-                    id="note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Sleep, meals, or anything you want to note…"
-                  />
-                  <div className="sectionhead compact health-heading">
-                    <h2>Health details</h2>
-                    <span className="muted">Optional</span>
-                  </div>
-                  <div className="health-fields">
-                    <label>
-                      <span><Weight size={15} /> Weight (kg)</span>
-                      <input value={weightValue} onChange={(e) => setWeightValue(e.target.value)} inputMode="decimal" />
-                    </label>
-                    <label>
-                      <span><Moon size={15} /> Sleep (hr)</span>
-                      <input value={sleep} onChange={(e) => setSleep(e.target.value)} inputMode="decimal" />
-                    </label>
-                    <label>
-                      <span><Dumbbell size={15} /> Activity (min)</span>
-                      <input value={activityMinutes} onChange={(e) => setActivityMinutes(e.target.value)} inputMode="numeric" />
-                    </label>
-                    <label>
-                      <span><Utensils size={15} /> Meals</span>
-                      <select value={meals} onChange={(e) => setMeals(e.target.value)}>
-                        <option>Balanced</option>
-                        <option>Light</option>
-                        <option>Irregular</option>
-                      </select>
-                    </label>
-                  </div>
-                  <label className="fieldlabel" htmlFor="symptoms">
-                    Symptoms or changes
-                  </label>
-                  <input
-                    id="symptoms"
-                    className="text-input"
-                    value={symptoms}
-                    onChange={(e) => setSymptoms(e.target.value)}
-                    placeholder="e.g. mild fatigue"
-                  />
-                  <label className="fieldlabel" htmlFor="medication">
-                    <Pill size={15} style={{ display: 'inline', marginRight: 6 }} />
-                    Medication or test update
-                  </label>
-                  <input
-                    id="medication"
-                    className="text-input"
-                    value={medication}
-                    onChange={(e) => setMedication(e.target.value)}
-                    placeholder="e.g. no changes"
-                  />
-                  <button
-                    className="primary"
-                    style={{ marginTop: 16 }}
-                    onClick={requestAdvice}
-                  >
-                    Get AI Doctor advice
-                    <Sparkles size={18} />
-                  </button>
-                  <span className="demo-label">
-                    <ShieldCheck size={13} />
-                    Simulated wellness guidance for this UI demo
-                  </span>
-                </>
-              )}
+
+            <TabsContent value="records" className="page">
+              <div className="page-top"><div><span className="eyebrow">历史记录</span><h1>我的检测记录</h1></div><CalendarDays size={22} /></div>
+              <div className="record-summary"><span><strong>{entries.length}</strong><small>全部记录</small></span><span><strong>12</strong><small>舌象照片</small></span><span><strong>5</strong><small>体检指标</small></span></div>
+              <div className="section-heading"><h2>最近记录</h2><span>按时间倒序</span></div>
+              <div className="timeline">{entries.map((entry) => <button key={entry.id} onClick={() => { setSelectedEntry(entry); setReportName(entry.kind === 'Tongue' ? 'single' : 'record'); }}><span className={`timeline-icon ${entry.kind.toLowerCase()}`}>{entry.kind === 'Tongue' ? <FileImage size={19} /> : entry.kind === 'Metrics' ? <FlaskConical size={19} /> : <ClipboardCheck size={19} />}</span><span><small>{entry.date}</small><strong>{entry.title}</strong><em>{entry.detail}</em></span><ChevronRight size={16} /></button>)}</div>
+              <p className="disclaimer">当前为演示记录，刷新页面后会恢复初始状态。</p>
             </TabsContent>
-            <TabsContent value="archive" className="page-panel">
-              <span className="eyebrow">YOUR HEALTH JOURNAL</span>
-              <h1 className="page-title">
-                {journalView === 'entries'
-                  ? 'Health journal'
-                  : journalView === 'trends'
-                    ? 'Health trends'
-                    : 'Visit preparation'}
-              </h1>
-              <p className="subtitle">
-                {journalView === 'entries'
-                  ? 'Record today. Understand changes over time.'
-                  : journalView === 'trends'
-                    ? 'See your records alongside everyday factors.'
-                    : 'Bring a clear, useful summary to your next visit.'}
-              </p>
-              <div className="journal-switch" aria-label="Journal sections">
-                {[
-                  ['entries', FolderHeart, 'Entries'],
-                  ['trends', TrendingUp, 'Trends'],
-                  ['visit', ClipboardList, 'Visit prep'],
-                ].map(([value, Icon, label]) => {
-                  const SwitchIcon = Icon as typeof FolderHeart;
-                  return (
-                    <button
-                      key={String(value)}
-                      className={journalView === value ? 'active' : ''}
-                      onClick={() => setJournalView(value as JournalView)}
-                    >
-                      <SwitchIcon size={16} />{String(label)}
-                    </button>
-                  );
-                })}
-              </div>
-              {journalView === 'entries' ? (
-                <>
-                  <div className="archive-info">
-                    <div>
-                      <strong>{records.length}</strong>
-                      <span> entries</span>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <CalendarDays size={22} style={{ margin: '0 0 5px auto' }} />
-                      <span>September 2026</span>
-                    </div>
-                  </div>
-                  <div className="sectionhead">
-                    <h2>All entries</h2>
-                    <span className="muted">Most recent first</span>
-                  </div>
-                  <div className="record-list">{records.map(row)}</div>
-                  {!isVip && (
-                    <button className="upsell" onClick={() => setModal('vip')}>
-                      <Crown size={23} />
-                      <span style={{ flex: 1 }}>
-                        See more of your health story
-                        <br />
-                        <strong>Explore VIP trends and visit prep</strong>
-                      </span>
-                      <ChevronRight size={16} />
-                    </button>
-                  )}
-                  <p className="footnote">Demo entries only. No medical diagnosis.</p>
-                </>
-              ) : journalView === 'trends' ? trendsPanel : visitPrepPanel}
+
+            <TabsContent value="reports" className="page">
+              <div className="page-top"><div><span className="eyebrow">智能分析</span><h1>舌象分析报告</h1></div><BarChart3 size={23} /></div>
+              <button className="report-card featured" onClick={() => setReportName('single')}><div className="report-card-top"><span className="report-symbol"><ScanFace size={21} /></span><span className="report-tag">最近一次</span></div><strong>单次舌象智能分析</strong><p>9月9日 · 照片质量合格 · 已归纳 5 项可见特征</p><div className="report-foot"><span>查看分析</span><ChevronRight size={17} /></div></button>
+              <button className={isVip ? 'report-card' : 'report-card locked'} onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div className="report-card-top"><span className="report-symbol"><TrendingUp size={21} /></span>{!isVip && <LockKeyhole size={17} />}</div><strong>30天舌象变化趋势</strong><p>连续对比舌色、舌苔、舌体形态和其他可见特征。</p><div className="mini-chart" aria-label="舌象变化趋势示意"><i style={{ height: '36%' }} /><i style={{ height: '52%' }} /><i style={{ height: '44%' }} /><i style={{ height: '68%' }} /><i style={{ height: '62%' }} /><i style={{ height: '74%' }} /></div><div className="report-foot"><span>{isVip ? '查看趋势报告' : '预览高级版趋势'}</span><ChevronRight size={17} /></div></button>
+              <p className="disclaimer">分析用于描述照片中的可见舌象特征与记录变化，不提供疾病诊断。</p>
             </TabsContent>
-            <TabsContent value="profile" className="page-panel">
-              <span className="eyebrow">A LITTLE CARE, EVERY DAY</span>
-              <h1 className="page-title">Profile</h1>
-              <div className="profile">
-                <span className="avatar">
-                  <UserRound size={29} />
-                </span>
-                <div>
-                  <h2>Alex</h2>
-                  <span className={isVip ? 'pill vip-pill' : 'pill'}>
-                    {isVip ? 'VIP · Demo access' : 'Basic · Free plan'}
-                  </span>
-                </div>
+
+            <TabsContent value="profile" className="page">
+              <span className="eyebrow">个人中心</span><h1>我的舌康</h1>
+              <section className="profile-card"><span className="avatar"><UserRound size={28} /></span><div><strong>小康</strong><small>{isVip ? '高级版 · 完整演示权限' : '基础版 · 免费使用'}</small></div><ChevronRight size={17} /></section>
+              <section className="membership-card"><div><Crown size={20} /><span><strong>{isVip ? '高级版已启用' : '基础版会员'}</strong><small>{isVip ? '完整单次报告和连续趋势分析' : '舌象拍摄、记录和基础分析'}</small></span></div><div className="membership-switch"><button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>基础版</button><button className={isVip ? 'active' : ''} onClick={() => setPlan('vip')}>高级版</button></div></section>
+              <div className="menu-list">
+                <button onClick={() => setReportName('hospital')}><Building2 size={19} /><span><strong>医院关怀计划</strong><small>{hospitalLinked ? '已连接 · 高级版关怀期生效中' : '连接后可获得医院提供的高级版权益'}</small></span><ChevronRight size={16} /></button>
+                <div><Bell size={19} /><span><strong>每日提醒</strong><small>提醒完成当天的舌象检测</small></span><Switch checked={reminder} onCheckedChange={setReminder} /></div>
+                <button onClick={() => setReportName('privacy')}><ShieldCheck size={19} /><span><strong>隐私与数据</strong><small>管理照片和记录的使用方式</small></span><ChevronRight size={16} /></button>
+                <button onClick={() => setReportName('help')}><CircleHelp size={19} /><span><strong>使用帮助</strong><small>了解患者端演示功能</small></span><ChevronRight size={16} /></button>
               </div>
-              <div className="profile-plan-switch">
-                <span>
-                  <strong>Preview membership</strong>
-                  <small>Switch plans to explore this UI prototype.</small>
-                </span>
-                <div>
-                  <button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>Basic</button>
-                  <button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}>VIP</button>
-                </div>
-              </div>
-              {!isVip && (
-                <button className="upsell" onClick={() => setModal('vip')}>
-                  <Crown size={26} />
-                  <span style={{ flex: 1 }}>
-                    <strong style={{ fontSize: 16 }}>More from your journal</strong>
-                    <br />Long-term trends · Personalized visit prep
-                  </span>
-                  <ChevronRight size={17} />
-                </button>
-              )}
-              {isVip && (
-                <div className="vip-status-card">
-                  <Crown size={22} />
-                  <span><strong>VIP features are open</strong><small>Full trends, connected factors and personalized visit prep</small></span>
-                </div>
-              )}
-              <div className="menu">
-                <button className="menu-row" onClick={() => setTab('archive')}>
-                  <FolderHeart size={19} />
-                  <span>My health journal & trends</span>
-                  <ChevronRight size={16} />
-                </button>
-                <button
-                  className="menu-row"
-                  onClick={() => {
-                    setJournalView('visit');
-                    setTab('archive');
-                  }}
-                >
-                  <ClipboardList size={19} />
-                  <span>Smart Visit Prep</span>
-                  <small className="muted">{isVip ? 'Personalized' : 'Basic'}</small>
-                  <ChevronRight size={16} />
-                </button>
-                <button
-                  className="menu-row"
-                  onClick={() => setModal('hospital')}
-                >
-                  <Building2 size={19} />
-                  <span>Connect a hospital</span>
-                  <small className="muted">Not linked</small>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-              <div className="menu">
-                <div className="menu-row">
-                  <Bell size={19} />
-                  <label htmlFor="remind" style={{ flex: 1 }}>
-                    Check-in reminders{' '}
-                    <small
-                      style={{
-                        display: 'block',
-                        color: '#85958c',
-                        fontSize: 11,
-                      }}
-                    >
-                      Demo only; no notifications sent
-                    </small>
-                  </label>
-                  <Switch
-                    id="remind"
-                    checked={reminder}
-                    onCheckedChange={setReminder}
-                  />
-                </div>
-                <button
-                  className="menu-row"
-                  onClick={() => setModal('privacy')}
-                >
-                  <ShieldCheck size={19} />
-                  <span>Privacy & data</span>
-                  <ChevronRight size={16} />
-                </button>
-                <button className="menu-row" onClick={() => setModal('help')}>
-                  <CircleHelp size={19} />
-                  <span>Help & feedback</span>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-              <p className="footnote">
-                TongueCare · A little care, every day
-                <br />
-                Basic UI demo · v1.0
-              </p>
+              <p className="disclaimer">舌康患者端原型 · 演示数据 · 2.0版</p>
             </TabsContent>
           </div>
-          <TabsList className="bottomnav" aria-label="Main navigation">
-            {[
-              ['home', Home, 'Home'],
-              ['capture', Camera, 'Capture'],
-              ['archive', FolderHeart, 'Journal'],
-              ['profile', UserRound, 'Profile'],
-            ].map(([value, Icon, label]) => {
-              const I = Icon as typeof Home;
-              return (
-                <TabsTrigger key={String(value)} value={String(value)}>
-                  <I />
-                  <span>{String(label)}</span>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+          <TabsList className="bottomnav" aria-label="主导航"><TabsTrigger value="home"><Home /><span>检测</span></TabsTrigger><TabsTrigger value="records"><FolderHeart /><span>记录</span></TabsTrigger><TabsTrigger value="reports"><FileHeart /><span>报告</span></TabsTrigger><TabsTrigger value="profile"><UserRound /><span>我的</span></TabsTrigger></TabsList>
         </Tabs>
       </div>
-      <footer className="stage-footer">
-        TongueCare / Basic prototype / Demo data
-      </footer>
-      <Dialog
-        open={!!modal}
-        onOpenChange={(o) => {
-          if (!o) setModal('');
-        }}
-      >
-        <DialogContent
-          className="dialog-inner"
-          showCloseButton={modal !== 'analyzing'}
-        >
-          <DialogTitle>
-            {
-              (
-                {
-                  record: 'Entry details',
-                  success: 'Entry saved',
-                  guide: '3 tips before you capture',
-                  vip: 'VIP benefits',
-                  hospital: 'Hospital care benefits',
-                  privacy: 'Privacy & data',
-                  help: 'Help',
-                  notifications: 'Notifications',
-                  large: 'Photo too large',
-                  analyzing: 'AI Doctor is reviewing your check-in',
-                  ai: 'Your AI Doctor guidance',
-                  reports: 'Test report comparison',
-                  visitSummary: 'Smart Visit Prep summary',
-                } as Record<string, string>
-              )[modal]
-            }
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            TongueCare feature information and entry details
-          </DialogDescription>
-          {modal === 'record' && selected ? (
-            <>
-              <div className="detail-box">
-                {selected.image ? (
-                  <Image
-                    src={selected.image}
-                    alt="Tongue entry"
-                    width={340}
-                    height={230}
-                    unoptimized
-                    style={{
-                      maxHeight: 230,
-                      width: '100%',
-                      objectFit: 'contain',
-                      borderRadius: 12,
-                      marginBottom: 12,
-                    }}
-                  />
-                ) : (
-                  <FileImage
-                    size={40}
-                    style={{ margin: '10px auto 20px', color: '#73a084' }}
-                  />
-                )}
-                <strong>
-                  {selected.date} · {selected.time}
-                </strong>
-                <p>Feeling: {selected.feeling}</p>
-                <p>Note: {selected.note}</p>
-                {selected.health && (
-                  <div className="entry-health-grid">
-                    <span><small>Weight</small><strong>{selected.health.weight} kg</strong></span>
-                    <span><small>Sleep</small><strong>{selected.health.sleep} hr</strong></span>
-                    <span><small>Activity</small><strong>{selected.health.activity} min</strong></span>
-                    <span><small>Meals</small><strong>{selected.health.meals}</strong></span>
-                    <span className="wide"><small>Symptoms</small><strong>{selected.health.symptoms}</strong></span>
-                    <span className="wide"><small>Medication / tests</small><strong>{selected.health.medication}</strong></span>
-                  </div>
-                )}
-                {selected.advice && (
-                  <div className="ai-entry-summary">
-                    <strong>AI Doctor guidance</strong>
-                    <ul>
-                      {selected.advice.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <small className="muted">
-                  {selected.id < 4 ? 'Sample entry' : 'Demo entry'} · Only
-                  visible to you
-                </small>
+      <footer className="stage-footer">舌康智能检测 · 患者端体验原型</footer>
+
+      <Sheet open={windowName === 'capture'} onOpenChange={(open) => !open && setWindowName(null)}>
+        <SheetContent side="bottom" className="task-sheet capture-sheet">
+          <SheetHeader>
+            <SheetTitle>{captureStep === 'capture' ? '舌象拍摄' : captureStep === 'review' ? '确认照片' : captureStep === 'analyzing' ? '正在智能分析' : '智能分析完成'}</SheetTitle>
+            <SheetDescription>{captureStep === 'capture' ? '按照画面提示拍摄清晰、完整的舌象。' : captureStep === 'review' ? '确认照片清晰后，再开始智能分析。' : captureStep === 'analyzing' ? '正在检查照片质量并识别可见舌象特征。' : '先查看分析摘要，再保存本次记录。'}</SheetDescription>
+          </SheetHeader>
+          <div className="sheet-body">
+            {captureStep === 'analyzing' ? (
+              <div className="ai-analyzing"><span className="ai-orbit"><Sparkles size={30} /></span><strong>正在分析舌象照片</strong><p>检查光线与清晰度</p><div className="analysis-progress"><i /></div><small>识别舌色、舌苔和舌体形态…</small></div>
+            ) : captureStep === 'result' ? (
+              <div className="capture-result">
+                <div className="ai-result-head"><span><Sparkles size={22} /></span><div><small>智能分析摘要</small><strong>照片质量良好，可以进行记录比较</strong></div></div>
+                <div className="capture-findings"><span><small>舌色</small><strong>淡红</strong><em>在近期记录范围内</em></span><span><small>舌苔</small><strong>薄白</strong><em>较上次稍淡</em></span><span><small>舌体形态</small><strong>基本规则</strong><em>未见明显变化</em></span></div>
+                <div className="info-line"><Info size={16} />智能分析用于记录可见特征和变化趋势，不能代替医生诊断。</div>
+                <button className="primary" onClick={saveCapture}>保存并查看完整报告<ChevronRight size={18} /></button>
+                <button className="secondary-action" onClick={() => setCaptureStep('review')}>重新分析</button>
               </div>
-            </>
-          ) : modal === 'analyzing' ? (
-            <output className="ai-loading">
-              <span className="ai-orb">
-                <LoaderCircle size={34} />
-              </span>
-              <strong>Reviewing your photo and check-in…</strong>
-              <p>
-                This simulated step shows how AI guidance could appear in the
-                final product.
-              </p>
-            </output>
-          ) : modal === 'ai' ? (
-            <>
-              <div className="ai-card">
-                <div className="ai-card-head">
-                  <span className="ai-doctor-icon">
-                    <Stethoscope size={22} />
-                  </span>
-                  <span>
-                    <strong>AI Doctor</strong>
-                    <small>Wellness guidance · Generated just now</small>
-                  </span>
-                  <span className="ai-badge">AI</span>
-                </div>
-                <div className="ai-observation">
-                  <span>CHECK-IN SUMMARY</span>
-                  <strong>{feeling}</strong>
-                  <p>
-                    Your photo was received successfully. The suggestions below
-                    reflect the feeling you selected; your note stays with this
-                    entry.
-                  </p>
-                </div>
-                <ul className="ai-list">
-                  {advice.map((item) => (
-                    <li key={item}>
-                      <CheckCircle2 size={17} />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+            ) : (
+              <>
+                <div className="capture-frame">{photo ? <Image src={photo} alt="已选择的舌象照片" width={420} height={280} unoptimized /> : <ScanFace size={72} />}<span className="capture-guide">{photo ? '照片已就位 · 请确认清晰度' : '请靠近一些 · 张大嘴巴 · 舌头自然伸出'}</span></div>
+                <div className="quality-grid"><span><CheckCircle2 size={16} />光线</span><span><CheckCircle2 size={16} />距离</span><span><CheckCircle2 size={16} />清晰度</span></div>
+                <label className="upload-button"><ImagePlus size={18} />{photo ? '重新拍摄或选择照片' : '拍摄或选择舌象照片'}<input type="file" accept="image/*" capture="environment" onChange={(event) => loadPhoto(event.target.files?.[0])} /></label>
+                <button className="primary" onClick={analyzeCapture}>{photo ? '开始智能分析' : '使用示例照片体验智能分析'}<Sparkles size={18} /></button>
+                <p className="disclaimer">本原型中的拍摄引导和智能分析为模拟效果。</p>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={windowName === 'metrics'} onOpenChange={(open) => !open && setWindowName(null)}>
+        <SheetContent side="bottom" className="task-sheet metric-sheet">
+          <SheetHeader>
+            <SheetTitle>{metricsStep === 'choose' ? '添加检查结果' : metricsStep === 'upload' ? '上传化验单' : metricsStep === 'manual' ? '手动填写' : '确认识别结果'}</SheetTitle>
+            <SheetDescription>{metricsStep === 'choose' ? '不认识指标也没关系，可以直接上传化验单。' : metricsStep === 'confirm' ? '请对照原始化验单确认数值、单位和参考范围。' : '检查结果将加入你的健康档案。'}</SheetDescription>
+          </SheetHeader>
+          <div className="sheet-body metric-flow">
+            {metricsStep === 'choose' ? (
+              <div className="entry-methods">
+                <button className="entry-method recommended" onClick={() => setMetricsStep('upload')}><span className="method-icon"><Upload size={22} /></span><span><small>推荐</small><strong>拍照或上传化验单</strong><em>自动识别检查名称、数值、单位和参考范围，你只需确认。</em></span><ChevronRight size={18} /></button>
+                <button className="entry-method" onClick={() => setMetricsStep('manual')}><span className="method-icon"><Keyboard size={22} /></span><span><strong>手动填写</strong><em>适合已经知道指标在化验单什么位置的用户。</em></span><ChevronRight size={18} /></button>
               </div>
-              <p className="ai-disclaimer">
-                Demo guidance only. It cannot diagnose disease or replace a
-                qualified healthcare professional.
-              </p>
-              <button className="primary" onClick={save}>
-                Save guidance to journal
-                <Check size={18} />
-              </button>
-            </>
-          ) : modal === 'success' ? (
-            <>
-              <div className="success-mark">
-                <CheckCircle2 size={38} />
+            ) : metricsStep === 'upload' ? (
+              <div className="upload-step">
+                <button className="back-link" onClick={() => setMetricsStep('choose')}><ArrowLeft size={16} />返回选择</button>
+                <label className="lab-upload"><Upload size={34} /><strong>{labFileName || '选择化验单照片或文档'}</strong><span>支持常见图片和文档格式 · 演示文件不会上传</span><input type="file" accept=".pdf,image/jpeg,image/png" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setLabFileName(file.name); setMetricsStep('confirm'); } }} /></label>
+                <div className="upload-tips"><strong>拍摄时请注意</strong><span><CheckCircle2 size={16} />完整拍下检查名称、数值和参考范围</span><span><CheckCircle2 size={16} />保持光线均匀，避免反光和模糊</span></div>
+                <button className="secondary-action" onClick={() => { setLabFileName('演示化验单.pdf'); setMetricsStep('confirm'); }}>试用演示化验单</button>
               </div>
-              <p className="modal-copy" style={{ textAlign: 'center' }}>
-                Your entry and AI guidance are now in your journal.
-                <br />
-                Demo entries reset when you refresh.
-              </p>
-              <button
-                className="primary"
-                onClick={() => {
-                  setTab('archive');
-                  setModal('');
-                }}
-              >
-                View journal
-              </button>
-            </>
-          ) : modal === 'reports' ? (
-            <div className="modal-copy">
-              <p>Upload a report to place it alongside earlier results and your health records.</p>
-              <label className="report-upload">
-                <FileImage size={20} />
-                <span>
-                  <strong>{reportFileName || 'Upload a test report'}</strong>
-                  <small>{reportFileName ? 'Added to this demo comparison' : 'PDF, JPG or PNG · demo only'}</small>
-                </span>
-                <input
-                  type="file"
-                  accept=".pdf,image/jpeg,image/png"
-                  onChange={(event) => setReportFileName(event.target.files?.[0]?.name ?? '')}
-                />
-              </label>
-              <div className="report-comparison">
-                {reportFileName && <div><small>TODAY</small><strong>{reportFileName}</strong><span className="new-report">New</span></div>}
-                <div><small>JUN 12</small><strong>Routine blood test</strong><span>Baseline</span></div>
-                <div><small>AUG 08</small><strong>Routine blood test</strong><span className="steady">Stable</span></div>
-                <div><small>SEP 03</small><strong>Follow-up panel</strong><span className="review">Review</span></div>
+            ) : metricsStep === 'manual' ? (
+              <div className="manual-metrics">
+                <button className="back-link" onClick={() => setMetricsStep('choose')}><ArrowLeft size={16} />返回选择</button>
+                {metricDefinitions.map((item) => (
+                  <details key={item.key} className="metric-item">
+                    <summary><span><strong>{item.name}</strong><small>{item.short} · {item.unit}</small></span><span className="metric-value">{metrics[item.key]}</span><ChevronRight size={16} /></summary>
+                    <div className="metric-editor"><p>{item.help}</p><label>化验结果<div><input inputMode="decimal" value={metrics[item.key]} onChange={(event) => setMetrics({ ...metrics, [item.key]: event.target.value })} /><span>{item.unit}</span></div></label><small>请使用化验单上显示的单位和参考范围。</small></div>
+                  </details>
+                ))}
+                <button className="primary" onClick={() => setMetricsStep('confirm')}>检查填写内容<ChevronRight size={17} /></button>
               </div>
-              <div className="detail-box">
-                <strong>Trend note</strong><br />Most tracked values remain stable. One recent item is marked for discussion at your next visit.
+            ) : (
+              <div className="confirm-metrics">
+                <button className="back-link" onClick={() => setMetricsStep(labFileName ? 'upload' : 'manual')}><ArrowLeft size={16} />返回修改</button>
+                {labFileName && <div className="source-file"><FileImage size={18} /><span><small>信息来源</small><strong>{labFileName}</strong></span><CheckCircle2 size={18} /></div>}
+                <div className="confirm-list">{metricDefinitions.map((item) => <div key={item.key}><span><strong>{item.name}</strong><small>{item.short} · 化验单范围 {item.range} {item.unit}</small></span><span className="confirmed-value"><strong>{metrics[item.key]}</strong><small>{item.unit}</small></span>{item.key === 'ggt' && <em>超出所填参考范围</em>}</div>)}</div>
+                <div className="info-line"><Info size={16} />“超出参考范围”不等于确诊疾病。请保留原始化验单，并在复诊时向医生确认。</div>
+                <button className="primary" onClick={saveMetrics}>确认并保存<Check size={18} /></button>
               </div>
-              <p className="ai-disclaimer">Demo data only. Test results require clinician interpretation.</p>
-            </div>
-          ) : modal === 'visitSummary' ? (
-            <div className="modal-copy">
-              <div className="visit-summary-sheet">
-                <span className="eyebrow">VISIT BRIEF · SEP 2026</span>
-                <h3>Alex’s check-in summary</h3>
-                <p>
-                  <strong>{isVip ? '25 check-ins in the last 30 days' : `${records.length} records`}</strong>
-                  {' · '}Latest feeling: {records[0]?.feeling}
-                </p>
-                <hr />
-                {isVip && (
-                  <>
-                    <strong>VIP 30-day brief</strong>
-                    <ul>
-                      <li>25 of 30 planned check-ins completed.</li>
-                      <li>Morning record goal: 8 of 11 completed.</li>
-                      <li>One follow-up report item is marked for review.</li>
-                      <li>Fatigue was recorded more often after shorter sleep.</li>
-                    </ul>
-                    <hr />
-                  </>
-                )}
-                <strong>What to discuss</strong>
-                <ul>
-                  {visitQuestions.filter(Boolean).map((question) => <li key={question}>{question}</li>)}
-                </ul>
-                {hospitalLinked && <span className="review-flag"><Flag size={14} /> Clinician review requested</span>}
-              </div>
-              <p>{isVip ? 'This personalized VIP version brings trends, daily factors and your questions together.' : 'Basic includes a concise summary. VIP adds editable questions and personalized trend context.'}</p>
-            </div>
-          ) : (
-            <div className="modal-copy">
-              {modal === 'guide' ? (
-                <>
-                  <p>
-                    <strong>01 · Find even lighting</strong>
-                    <br />
-                    Choose a bright spot and avoid shadows across the photo.
-                  </p>
-                  <p>
-                    <strong>02 · Keep the camera level</strong>
-                    <br />
-                    Center your tongue and use a similar angle each time.
-                  </p>
-                  <p>
-                    <strong>03 · Check before saving</strong>
-                    <br />
-                    Retake blurry photos and add how you feel today.
-                  </p>
-                </>
-              ) : modal === 'vip' ? (
-                <>
-                  <p>
-                    Basic includes guided capture, image-quality checks, daily health records, reminders and a basic visit summary.
-                  </p>
-                  <div className="vip-benefit-list">
-                    {[
-                      'Longer, more detailed longitudinal trends',
-                      'Sleep, activity and nutrition data integration',
-                      'Personalized support around clinician goals',
-                      'Comparison across multiple test reports',
-                      'Personalized Smart Visit Prep with editable questions',
-                    ].map((benefit) => (
-                      <span key={benefit}><CheckCircle2 size={17} />{benefit}</span>
-                    ))}
-                  </div>
-                  <p>
-                    This prototype does not make a real purchase or charge.
-                  </p>
-                  <button className="primary vip-primary" onClick={() => selectPlan('vip')}>
-                    <Crown size={18} /> Preview VIP features
-                  </button>
-                </>
-              ) : modal === 'hospital' ? (
-                <>
-                  <p>
-                    Use an invitation code from your hospital to connect to a
-                    care plan.
-                  </p>
-                  <div className="detail-box">
-                    Enjoy full access during your care plan. With your consent,
-                    your linked clinician can view the clinical summary and review flags.
-                  </div>
-                  <p>This prototype uses a simulated hospital connection.</p>
-                  <button
-                    className="primary"
-                    onClick={() => {
-                      setHospitalLinked(true);
-                      setModal('');
-                      setJournalView('visit');
-                      setTab('archive');
-                    }}
-                  >
-                    <Building2 size={18} /> Connect demo care plan
-                  </button>
-                </>
-              ) : modal === 'privacy' ? (
-                <p>
-                  This is a UI demo. Selected photos are previewed in this page
-                  only. They are not uploaded or shared with doctors. Entries
-                  reset when you refresh.
-                </p>
-              ) : modal === 'notifications' ? (
-                <p>
-                  You are all caught up.
-                  <br />
-                  Your daily entries are available in your journal.
-                </p>
-              ) : modal === 'large' ? (
-                <p>Choose an image smaller than 10 MB and try again.</p>
-              ) : (
-                <>
-                  <p>
-                    Open Capture to try the demo or select a photo. Add how you
-                    feel, save your entry, and find it in Journal.
-                  </p>
-                  <p>
-                    This version demonstrates the interface and user flow. It
-                    does not provide a medical diagnosis.
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={windowName === 'daily'} onOpenChange={(open) => !open && setWindowName(null)}><SheetContent side="bottom" className="task-sheet"><SheetHeader><SheetTitle>每日生活记录</SheetTitle><SheetDescription>简单记录今天的生活情况，作为舌象变化的辅助信息。</SheetDescription></SheetHeader><div className="sheet-body daily-form"><label><Moon size={17} /><span>睡眠<input value={daily.sleep} onChange={(event) => setDaily({ ...daily, sleep: event.target.value })} inputMode="decimal" /></span><em>小时</em></label><label><Activity size={17} /><span>活动<input value={daily.activity} onChange={(event) => setDaily({ ...daily, activity: event.target.value })} inputMode="numeric" /></span><em>分钟</em></label><label><Utensils size={17} /><span>饮食<select value={daily.meals} onChange={(event) => setDaily({ ...daily, meals: event.target.value })}><option>均衡</option><option>清淡</option><option>高油脂</option><option>不规律</option></select></span></label><label><Pill size={17} /><span>用药<select value={daily.medication} onChange={(event) => setDaily({ ...daily, medication: event.target.value })}><option>按计划服用</option><option>漏服一次</option><option>有所调整</option><option>不适用</option></select></span></label><label><Activity size={17} /><span>饮酒<select value={daily.alcohol} onChange={(event) => setDaily({ ...daily, alcohol: event.target.value })}><option>无</option><option>一杯</option><option>两杯或更多</option></select></span></label><label className="wide"><Info size={17} /><span>身体感受<textarea value={daily.symptoms} onChange={(event) => setDaily({ ...daily, symptoms: event.target.value })} /></span></label><button className="primary" onClick={saveDaily}>保存今日记录<Check size={18} /></button></div></SheetContent></Sheet>
+
+      <Dialog open={!!reportName} onOpenChange={(open) => !open && setReportName(null)}><DialogContent className="report-dialog"><DialogTitle>{reportName === 'record' ? selectedEntry?.title ?? '记录详情' : reportName === 'single' ? '单次舌象智能分析' : reportName === 'monthly' ? '9月舌象变化趋势' : reportName === 'visit' ? (isVip ? '复诊准备' : '高级版趋势报告') : reportName === 'hospital' ? '医院关怀计划' : reportName === 'privacy' ? '隐私与数据' : '使用帮助'}</DialogTitle><DialogDescription>{reportName === 'record' ? selectedEntry?.date ?? '健康记录' : reportName === 'single' ? '9月10日 · 患者报告' : '舌康患者端体验'}</DialogDescription>
+        {reportName === 'record' && selectedEntry ? <div className="dialog-scroll"><div className={`record-detail-hero ${selectedEntry.kind.toLowerCase()}`}>{selectedEntry.kind === 'Metrics' ? <FlaskConical size={26} /> : <ClipboardCheck size={26} />}<span><small>{selectedEntry.kind === 'Metrics' ? '体检指标记录' : '每日生活记录'}</small><strong>{selectedEntry.detail}</strong></span></div>{selectedEntry.kind === 'Metrics' ? <div className="record-detail-grid">{metricDefinitions.map((item) => <span key={item.key}><small>{item.name} · {item.short}</small><strong>{metrics[item.key]}</strong><em>{item.unit}</em></span>)}</div> : <div className="record-detail-list">{[['睡眠', `${daily.sleep} 小时`], ['活动', `${daily.activity} 分钟`], ['饮食', daily.meals], ['用药', daily.medication], ['饮酒', daily.alcohol], ['身体感受', daily.symptoms]].map(([label, value]) => <span key={label}><small>{label}</small><strong>{value}</strong></span>)}</div>}<p className="disclaimer">当前为演示记录，刷新页面后会恢复初始状态。</p></div>
+        : reportName === 'single' ? <div className="dialog-scroll"><div className="analysis-hero"><span><ScanFace size={28} /></span><div><small>照片质量</small><strong>适合进行对比</strong><p>光线、位置和清晰度均通过演示检查。</p></div></div><div className="feature-table">{tongueFeatures.slice(0, isVip ? 5 : 3).map(([label, value, trend]) => <div key={label}><span><small>{label}</small><strong>{value}</strong></span><em>{trend}</em></div>)}</div>{!isVip ? <button className="vip-callout" onClick={() => setPlan('vip')}><LockKeyhole size={18} /><span><strong>解锁完整分析</strong><small>高级版增加湿润度、裂纹、齿痕和更详细的连续变化信息。</small></span><ChevronRight size={16} /></button> : <div className="insight"><Sparkles size={18} /><span><strong>连续变化提示</strong><p>与上月相比，你的舌苔看起来稍淡。建议继续在相似条件下拍摄，以便保持趋势可比性。</p></span></div>}<p className="disclaimer">报告描述照片中的可见特征和记录变化，不判断原因，也不提供疾病诊断。</p></div>
+        : reportName === 'monthly' ? <div className="dialog-scroll"><div className="monthly-score"><span><small>记录完成度</small><strong>25 / 30</strong><em>天</em></span><TrendingUp size={30} /></div><div className="trend-block"><div><span>舌苔表现</span><strong>整体较稳定</strong></div><div className="trend-line"><i /><i /><i /><i /><i /><i /><i /></div><p>近期舌象照片整体处于你的个人记录范围内。</p></div><div className="metric-row"><span><Weight size={17} /><em>体重</em><strong>68.4 千克</strong><small>减少 0.7 千克</small></span><span><FlaskConical size={17} /><em>丙氨酸氨基转移酶</em><strong>{metrics.alt} U/L</strong><small>最近一次结果</small></span></div><div className="insight"><Info size={18} /><span><strong>辅助信息提示</strong><p>一项体检指标与上次记录不同，建议保留原始化验单，需要时请专业人员解读。</p></span></div><p className="disclaimer">趋势信息用于整理连续记录，不用于判断疾病阶段。</p></div>
+        : reportName === 'visit' ? <div className="dialog-scroll">{!isVip ? <><div className="vip-cover"><Crown size={30} /><strong>连续趋势报告属于高级版功能</strong><p>把舌象记录、体检指标和生活因素放在同一时间线上查看。</p></div><button className="primary" onClick={() => { setPlan('vip'); setReportName('monthly'); }}>预览高级版报告<Crown size={17} /></button></> : <><div className="visit-list"><span><CheckCircle2 size={17} /><p><strong>30天内完成了25次记录</strong>本月记录连续性较好。</p></span><span><FlaskConical size={17} /><p><strong>已有5项体检指标</strong>需要时请准备好原始化验单。</p></span><span><Moon size={17} /><p><strong>两次疲劳记录出现在睡眠较短之后</strong>这是记录中出现的现象，不能确认因果关系。</p></span></div><label className="question-box">我的待确认问题<textarea defaultValue="最近睡眠时间较短，是否可能与疲劳感有关？" /></label></>}</div>
+        : reportName === 'hospital' ? <div className="dialog-scroll"><div className="hospital-panel"><Building2 size={28} /><strong>{hospitalLinked ? '关怀计划已连接' : '连接医院关怀计划'}</strong><p>{hospitalLinked ? '医院提供的高级版权益有效期至2026年11月30日。' : '输入医院邀请码，即可在关怀期内启用医院提供的高级版权益。'}</p></div>{!hospitalLinked && <><label className="code-field">邀请码<input placeholder="请输入医院提供的邀请码" /></label><button className="primary" onClick={() => { setHospitalLinked(true); setPlan('vip'); setReportName(null); }}>连接演示关怀计划<Check size={17} /></button></>}<p className="disclaimer">本原型仅模拟患者端连接流程，尚未接入真实医院系统。</p></div>
+        : reportName === 'privacy' ? <div className="dialog-scroll"><div className="info-line"><ShieldCheck size={18} />照片和健康信息仅保留在当前演示页面中，刷新后会恢复初始状态。</div><p>在数据用于连续分析或共享给关怀计划前，患者可以管理自己的授权。</p></div>
+        : <div className="dialog-scroll"><p>首页突出舌象智能检测，体检指标与生活记录收在“辅助信息”中。历史记录和报告分别放在独立页面。</p><p>本原型中的拍摄引导和智能分析为模拟效果，不提供疾病诊断或紧急监测。</p></div>}
+      </DialogContent></Dialog>
     </main>
   );
 }
