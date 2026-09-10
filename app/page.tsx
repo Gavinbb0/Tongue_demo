@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type WindowName = 'capture' | 'metrics' | 'daily' | null;
 type ReportName = 'record' | 'single' | 'monthly' | 'visit' | 'hospital' | 'privacy' | 'help' | null;
+type CaptureStep = 'capture' | 'review' | 'analyzing' | 'result';
 type HealthEntry = { id: number; date: string; kind: 'Tongue' | 'Metrics' | 'Daily'; title: string; detail: string };
 
 const starterEntries: HealthEntry[] = [
@@ -48,6 +49,7 @@ export default function Page() {
   const [reminder, setReminder] = useState(true);
   const [hospitalLinked, setHospitalLinked] = useState(false);
   const [photo, setPhoto] = useState('');
+  const [captureStep, setCaptureStep] = useState<CaptureStep>('capture');
   const [metricsStep, setMetricsStep] = useState<'choose' | 'upload' | 'manual' | 'confirm'>('choose');
   const [labFileName, setLabFileName] = useState('');
   const [entries, setEntries] = useState(starterEntries);
@@ -66,8 +68,16 @@ export default function Page() {
   const loadPhoto = (file?: File) => {
     if (!file || file.size > 10 * 1024 * 1024) return;
     const reader = new FileReader();
-    reader.onload = () => setPhoto(String(reader.result ?? ''));
+    reader.onload = () => {
+      setPhoto(String(reader.result ?? ''));
+      setCaptureStep('review');
+    };
     reader.readAsDataURL(file);
+  };
+
+  const analyzeCapture = () => {
+    setCaptureStep('analyzing');
+    window.setTimeout(() => setCaptureStep('result'), 1200);
   };
 
   const saveCapture = () => {
@@ -88,7 +98,7 @@ export default function Page() {
   };
 
   const taskRows = [
-    { value: 'capture', icon: Camera, title: 'Tongue capture', note: done.capture ? 'Completed today · Report ready' : '2 min · Best before breakfast', action: 'Start capture', open: () => setWindowName('capture' as const), complete: done.capture },
+    { value: 'capture', icon: Camera, title: 'Tongue capture', note: done.capture ? 'Completed today · Report ready' : '2 min · Best before breakfast', action: 'Start capture', open: () => { setCaptureStep(photo ? 'review' : 'capture'); setWindowName('capture' as const); }, complete: done.capture },
     { value: 'metrics', icon: FlaskConical, title: 'Health indicators', note: done.metrics ? 'Updated today' : 'Upload a report or enter values', action: 'Add health check', open: () => { setMetricsStep('choose'); setWindowName('metrics'); }, complete: done.metrics },
     { value: 'daily', icon: ClipboardCheck, title: 'Daily health record', note: done.daily ? 'Completed today' : 'Sleep, activity, meals and medication', action: 'Add daily record', open: () => setWindowName('daily' as const), complete: done.daily },
   ];
@@ -160,7 +170,35 @@ export default function Page() {
       </div>
       <footer className="stage-footer">TongueCare · Patient experience prototype</footer>
 
-      <Sheet open={windowName === 'capture'} onOpenChange={(open) => !open && setWindowName(null)}><SheetContent side="bottom" className="task-sheet"><SheetHeader><SheetTitle>Guided tongue capture</SheetTitle><SheetDescription>Follow the live prompts before taking the photo.</SheetDescription></SheetHeader><div className="sheet-body"><div className="capture-frame">{photo ? <Image src={photo} alt="Selected tongue capture" width={420} height={280} unoptimized /> : <ScanFace size={72} />}<span className="capture-guide">{photo ? 'Image centered' : 'Move a little closer · Open your mouth wider'}</span></div><div className="quality-grid"><span><CheckCircle2 size={16} />Lighting</span><span><CheckCircle2 size={16} />Distance</span><span><CheckCircle2 size={16} />Focus</span></div><label className="upload-button"><ImagePlus size={18} />{photo ? 'Choose another photo' : 'Choose a demo photo'}<input type="file" accept="image/*" onChange={(event) => loadPhoto(event.target.files?.[0])} /></label><button className="primary" onClick={saveCapture}>{photo ? 'Analyze this image' : 'Try demo analysis'}<Sparkles size={18} /></button><p className="disclaimer">Capture guidance and analysis are simulated in this prototype.</p></div></SheetContent></Sheet>
+      <Sheet open={windowName === 'capture'} onOpenChange={(open) => !open && setWindowName(null)}>
+        <SheetContent side="bottom" className="task-sheet capture-sheet">
+          <SheetHeader>
+            <SheetTitle>{captureStep === 'capture' ? '舌象拍摄' : captureStep === 'review' ? '确认照片' : captureStep === 'analyzing' ? 'AI 正在分析' : 'AI 分析完成'}</SheetTitle>
+            <SheetDescription>{captureStep === 'capture' ? '按照画面提示拍摄清晰、完整的舌象。' : captureStep === 'review' ? '确认照片清晰后，再开始 AI 分析。' : captureStep === 'analyzing' ? '正在检查照片质量并识别可见舌象特征。' : '先查看分析摘要，再保存本次记录。'}</SheetDescription>
+          </SheetHeader>
+          <div className="sheet-body">
+            {captureStep === 'analyzing' ? (
+              <div className="ai-analyzing"><span className="ai-orbit"><Sparkles size={30} /></span><strong>正在分析舌象照片</strong><p>检查光线与清晰度</p><div className="analysis-progress"><i /></div><small>识别舌色、舌苔和舌体形态…</small></div>
+            ) : captureStep === 'result' ? (
+              <div className="capture-result">
+                <div className="ai-result-head"><span><Sparkles size={22} /></span><div><small>AI 分析摘要</small><strong>照片质量良好，可以进行记录比较</strong></div></div>
+                <div className="capture-findings"><span><small>舌色</small><strong>淡红</strong><em>在近期记录范围内</em></span><span><small>舌苔</small><strong>薄白</strong><em>较上次稍淡</em></span><span><small>舌体形态</small><strong>基本规则</strong><em>未见明显变化</em></span></div>
+                <div className="info-line"><Info size={16} />AI 结果用于记录可见特征和变化趋势，不能代替医生诊断。</div>
+                <button className="primary" onClick={saveCapture}>保存并查看完整报告<ChevronRight size={18} /></button>
+                <button className="secondary-action" onClick={() => setCaptureStep('review')}>重新分析</button>
+              </div>
+            ) : (
+              <>
+                <div className="capture-frame">{photo ? <Image src={photo} alt="Selected tongue capture" width={420} height={280} unoptimized /> : <ScanFace size={72} />}<span className="capture-guide">{photo ? '照片已就位 · 请确认清晰度' : '请靠近一些 · 张大嘴巴 · 舌头自然伸出'}</span></div>
+                <div className="quality-grid"><span><CheckCircle2 size={16} />光线</span><span><CheckCircle2 size={16} />距离</span><span><CheckCircle2 size={16} />清晰度</span></div>
+                <label className="upload-button"><ImagePlus size={18} />{photo ? '重新拍摄或选择照片' : '拍摄或选择舌象照片'}<input type="file" accept="image/*" capture="environment" onChange={(event) => loadPhoto(event.target.files?.[0])} /></label>
+                <button className="primary" onClick={analyzeCapture}>{photo ? '开始 AI 分析' : '使用示例照片体验 AI 分析'}<Sparkles size={18} /></button>
+                <p className="disclaimer">本原型中的拍摄引导和 AI 分析为模拟效果。</p>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={windowName === 'metrics'} onOpenChange={(open) => !open && setWindowName(null)}>
         <SheetContent side="bottom" className="task-sheet metric-sheet">
