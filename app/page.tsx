@@ -3,11 +3,11 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import {
-  Activity, BarChart3, BatteryFull, Bell, Building2, CalendarDays, Camera,
+  Activity, ArrowLeft, BarChart3, BatteryFull, Bell, Building2, CalendarDays, Camera,
   Check, CheckCircle2, ChevronRight, CircleHelp, ClipboardCheck, Crown,
   FileHeart, FileImage, FlaskConical, FolderHeart, Home, ImagePlus, Info,
-  LockKeyhole, Moon, Pill, ScanFace, ShieldCheck, Signal, Sparkles,
-  TrendingUp, UserRound, Utensils, Weight, Wifi,
+  Keyboard, LockKeyhole, Moon, Pill, ScanFace, ShieldCheck, Signal, Sparkles,
+  TrendingUp, Upload, UserRound, Utensils, Weight, Wifi,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -32,6 +32,14 @@ const tongueFeatures = [
   ['Cracks & marks', 'Minor tooth marks', 'Continue consistent capture'],
 ];
 
+const metricDefinitions = [
+  { key: 'bmi', name: '身体质量指数', short: 'BMI', unit: 'kg/m²', range: '18.5–23.9', help: '根据身高和体重计算，用来大致了解体重状况。' },
+  { key: 'alt', name: '丙氨酸氨基转移酶', short: 'ALT', unit: 'U/L', range: '7–40', help: '血液中的一种酶，通常与其他检查一起了解肝脏情况。' },
+  { key: 'ast', name: '天门冬氨酸氨基转移酶', short: 'AST', unit: 'U/L', range: '13–35', help: '存在于肝脏、心脏和肌肉等组织，需要结合其他指标理解。' },
+  { key: 'ggt', name: 'γ-谷氨酰转移酶', short: 'GGT', unit: 'U/L', range: '10–40', help: '常用于了解肝脏和胆道情况，单项结果不能判断具体原因。' },
+  { key: 'tg', name: '甘油三酯', short: 'TG', unit: 'mmol/L', range: '0.3–1.7', help: '血液中的一种脂肪，通常是血脂检查的一部分。' },
+] as const;
+
 export default function Page() {
   const [tab, setTab] = useState('home');
   const [windowName, setWindowName] = useState<WindowName>(null);
@@ -40,6 +48,8 @@ export default function Page() {
   const [reminder, setReminder] = useState(true);
   const [hospitalLinked, setHospitalLinked] = useState(false);
   const [photo, setPhoto] = useState('');
+  const [metricsStep, setMetricsStep] = useState<'choose' | 'upload' | 'manual' | 'confirm'>('choose');
+  const [labFileName, setLabFileName] = useState('');
   const [entries, setEntries] = useState(starterEntries);
   const [selectedEntry, setSelectedEntry] = useState<HealthEntry | null>(null);
   const [done, setDone] = useState({ capture: false, metrics: false, daily: false });
@@ -79,7 +89,7 @@ export default function Page() {
 
   const taskRows = [
     { value: 'capture', icon: Camera, title: 'Tongue capture', note: done.capture ? 'Completed today · Report ready' : '2 min · Best before breakfast', action: 'Start capture', open: () => setWindowName('capture' as const), complete: done.capture },
-    { value: 'metrics', icon: FlaskConical, title: 'Health indicators', note: done.metrics ? 'Updated today' : 'BMI and 4 laboratory values due', action: 'Enter indicators', open: () => setWindowName('metrics' as const), complete: done.metrics },
+    { value: 'metrics', icon: FlaskConical, title: 'Health indicators', note: done.metrics ? 'Updated today' : 'Upload a report or enter values', action: 'Add health check', open: () => { setMetricsStep('choose'); setWindowName('metrics'); }, complete: done.metrics },
     { value: 'daily', icon: ClipboardCheck, title: 'Daily health record', note: done.daily ? 'Completed today' : 'Sleep, activity, meals and medication', action: 'Add daily record', open: () => setWindowName('daily' as const), complete: done.daily },
   ];
 
@@ -152,12 +162,53 @@ export default function Page() {
 
       <Sheet open={windowName === 'capture'} onOpenChange={(open) => !open && setWindowName(null)}><SheetContent side="bottom" className="task-sheet"><SheetHeader><SheetTitle>Guided tongue capture</SheetTitle><SheetDescription>Follow the live prompts before taking the photo.</SheetDescription></SheetHeader><div className="sheet-body"><div className="capture-frame">{photo ? <Image src={photo} alt="Selected tongue capture" width={420} height={280} unoptimized /> : <ScanFace size={72} />}<span className="capture-guide">{photo ? 'Image centered' : 'Move a little closer · Open your mouth wider'}</span></div><div className="quality-grid"><span><CheckCircle2 size={16} />Lighting</span><span><CheckCircle2 size={16} />Distance</span><span><CheckCircle2 size={16} />Focus</span></div><label className="upload-button"><ImagePlus size={18} />{photo ? 'Choose another photo' : 'Choose a demo photo'}<input type="file" accept="image/*" onChange={(event) => loadPhoto(event.target.files?.[0])} /></label><button className="primary" onClick={saveCapture}>{photo ? 'Analyze this image' : 'Try demo analysis'}<Sparkles size={18} /></button><p className="disclaimer">Capture guidance and analysis are simulated in this prototype.</p></div></SheetContent></Sheet>
 
-      <Sheet open={windowName === 'metrics'} onOpenChange={(open) => !open && setWindowName(null)}><SheetContent side="bottom" className="task-sheet"><SheetHeader><SheetTitle>Health indicators</SheetTitle><SheetDescription>Add values from your latest health check.</SheetDescription></SheetHeader><div className="sheet-body form-grid">{[['bmi', 'BMI', 'kg/m²'], ['alt', 'ALT', 'U/L'], ['ast', 'AST', 'U/L'], ['ggt', 'GGT', 'U/L'], ['tg', 'Triglycerides', 'mmol/L']].map(([key, label, unit]) => <label key={key}><span>{label}<small>{unit}</small></span><input inputMode="decimal" value={metrics[key as keyof typeof metrics]} onChange={(event) => setMetrics({ ...metrics, [key]: event.target.value })} /></label>)}<div className="info-line"><Info size={16} />Use the unit shown on your laboratory report. Reference ranges differ by laboratory.</div><button className="primary" onClick={saveMetrics}>Save indicators<Check size={18} /></button></div></SheetContent></Sheet>
+      <Sheet open={windowName === 'metrics'} onOpenChange={(open) => !open && setWindowName(null)}>
+        <SheetContent side="bottom" className="task-sheet metric-sheet">
+          <SheetHeader>
+            <SheetTitle>{metricsStep === 'choose' ? '添加检查结果' : metricsStep === 'upload' ? '上传化验单' : metricsStep === 'manual' ? '手动填写' : '确认识别结果'}</SheetTitle>
+            <SheetDescription>{metricsStep === 'choose' ? '不认识指标也没关系，可以直接上传化验单。' : metricsStep === 'confirm' ? '请对照原始化验单确认数值、单位和参考范围。' : '检查结果将加入你的健康档案。'}</SheetDescription>
+          </SheetHeader>
+          <div className="sheet-body metric-flow">
+            {metricsStep === 'choose' ? (
+              <div className="entry-methods">
+                <button className="entry-method recommended" onClick={() => setMetricsStep('upload')}><span className="method-icon"><Upload size={22} /></span><span><small>推荐</small><strong>拍照或上传化验单</strong><em>自动识别检查名称、数值、单位和参考范围，你只需确认。</em></span><ChevronRight size={18} /></button>
+                <button className="entry-method" onClick={() => setMetricsStep('manual')}><span className="method-icon"><Keyboard size={22} /></span><span><strong>手动填写</strong><em>适合已经知道指标在化验单什么位置的用户。</em></span><ChevronRight size={18} /></button>
+              </div>
+            ) : metricsStep === 'upload' ? (
+              <div className="upload-step">
+                <button className="back-link" onClick={() => setMetricsStep('choose')}><ArrowLeft size={16} />返回选择</button>
+                <label className="lab-upload"><Upload size={34} /><strong>{labFileName || '选择化验单照片或 PDF'}</strong><span>支持 JPG、PNG、PDF · 演示文件不会上传</span><input type="file" accept=".pdf,image/jpeg,image/png" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setLabFileName(file.name); setMetricsStep('confirm'); } }} /></label>
+                <div className="upload-tips"><strong>拍摄时请注意</strong><span><CheckCircle2 size={16} />完整拍下检查名称、数值和参考范围</span><span><CheckCircle2 size={16} />保持光线均匀，避免反光和模糊</span></div>
+                <button className="secondary-action" onClick={() => { setLabFileName('demo-lab-report.pdf'); setMetricsStep('confirm'); }}>试用演示化验单</button>
+              </div>
+            ) : metricsStep === 'manual' ? (
+              <div className="manual-metrics">
+                <button className="back-link" onClick={() => setMetricsStep('choose')}><ArrowLeft size={16} />返回选择</button>
+                {metricDefinitions.map((item) => (
+                  <details key={item.key} className="metric-item">
+                    <summary><span><strong>{item.name}</strong><small>{item.short} · {item.unit}</small></span><span className="metric-value">{metrics[item.key]}</span><ChevronRight size={16} /></summary>
+                    <div className="metric-editor"><p>{item.help}</p><label>化验结果<div><input inputMode="decimal" value={metrics[item.key]} onChange={(event) => setMetrics({ ...metrics, [item.key]: event.target.value })} /><span>{item.unit}</span></div></label><small>请使用化验单上显示的单位和参考范围。</small></div>
+                  </details>
+                ))}
+                <button className="primary" onClick={() => setMetricsStep('confirm')}>检查填写内容<ChevronRight size={17} /></button>
+              </div>
+            ) : (
+              <div className="confirm-metrics">
+                <button className="back-link" onClick={() => setMetricsStep(labFileName ? 'upload' : 'manual')}><ArrowLeft size={16} />返回修改</button>
+                {labFileName && <div className="source-file"><FileImage size={18} /><span><small>信息来源</small><strong>{labFileName}</strong></span><CheckCircle2 size={18} /></div>}
+                <div className="confirm-list">{metricDefinitions.map((item) => <div key={item.key}><span><strong>{item.name}</strong><small>{item.short} · 化验单范围 {item.range} {item.unit}</small></span><span className="confirmed-value"><strong>{metrics[item.key]}</strong><small>{item.unit}</small></span>{item.key === 'ggt' && <em>超出所填参考范围</em>}</div>)}</div>
+                <div className="info-line"><Info size={16} />“超出参考范围”不等于确诊疾病。请保留原始化验单，并在复诊时向医生确认。</div>
+                <button className="primary" onClick={saveMetrics}>确认并保存<Check size={18} /></button>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={windowName === 'daily'} onOpenChange={(open) => !open && setWindowName(null)}><SheetContent side="bottom" className="task-sheet"><SheetHeader><SheetTitle>Daily health record</SheetTitle><SheetDescription>Keep today’s context together in one quick entry.</SheetDescription></SheetHeader><div className="sheet-body daily-form"><label><Moon size={17} /><span>Sleep<input value={daily.sleep} onChange={(event) => setDaily({ ...daily, sleep: event.target.value })} inputMode="decimal" /></span><em>hours</em></label><label><Activity size={17} /><span>Activity<input value={daily.activity} onChange={(event) => setDaily({ ...daily, activity: event.target.value })} inputMode="numeric" /></span><em>minutes</em></label><label><Utensils size={17} /><span>Meals<select value={daily.meals} onChange={(event) => setDaily({ ...daily, meals: event.target.value })}><option>Balanced</option><option>Light</option><option>High fat</option><option>Irregular</option></select></span></label><label><Pill size={17} /><span>Medication<select value={daily.medication} onChange={(event) => setDaily({ ...daily, medication: event.target.value })}><option>Taken as planned</option><option>Missed a dose</option><option>Changed</option><option>Not applicable</option></select></span></label><label><Activity size={17} /><span>Alcohol<select value={daily.alcohol} onChange={(event) => setDaily({ ...daily, alcohol: event.target.value })}><option>None</option><option>1 drink</option><option>2 or more drinks</option></select></span></label><label className="wide"><Info size={17} /><span>Symptoms<textarea value={daily.symptoms} onChange={(event) => setDaily({ ...daily, symptoms: event.target.value })} /></span></label><button className="primary" onClick={saveDaily}>Save today’s record<Check size={18} /></button></div></SheetContent></Sheet>
 
       <Dialog open={!!reportName} onOpenChange={(open) => !open && setReportName(null)}><DialogContent className="report-dialog"><DialogTitle>{reportName === 'record' ? selectedEntry?.title ?? 'Record details' : reportName === 'single' ? 'Single tongue analysis' : reportName === 'monthly' ? 'September health trend' : reportName === 'visit' ? (isVip ? 'Visit preparation' : 'VIP monthly report') : reportName === 'hospital' ? 'Hospital care plan' : reportName === 'privacy' ? 'Privacy and data' : 'Help'}</DialogTitle><DialogDescription>{reportName === 'record' ? selectedEntry?.date ?? 'Health record' : reportName === 'single' ? 'Sep 10 · Patient report' : 'TongueCare patient experience'}</DialogDescription>
-        {reportName === 'record' && selectedEntry ? <div className="dialog-scroll"><div className={`record-detail-hero ${selectedEntry.kind.toLowerCase()}`}>{selectedEntry.kind === 'Metrics' ? <FlaskConical size={26} /> : <ClipboardCheck size={26} />}<span><small>{selectedEntry.kind.toUpperCase()} RECORD</small><strong>{selectedEntry.detail}</strong></span></div>{selectedEntry.kind === 'Metrics' ? <div className="record-detail-grid">{[['BMI', metrics.bmi, 'kg/m²'], ['ALT', metrics.alt, 'U/L'], ['AST', metrics.ast, 'U/L'], ['GGT', metrics.ggt, 'U/L'], ['Triglycerides', metrics.tg, 'mmol/L']].map(([label, value, unit]) => <span key={label}><small>{label}</small><strong>{value}</strong><em>{unit}</em></span>)}</div> : <div className="record-detail-list">{[['Sleep', `${daily.sleep} hours`], ['Activity', `${daily.activity} minutes`], ['Meals', daily.meals], ['Medication', daily.medication], ['Alcohol', daily.alcohol], ['Symptoms', daily.symptoms]].map(([label, value]) => <span key={label}><small>{label}</small><strong>{value}</strong></span>)}</div>}<p className="disclaimer">This is a demonstration record and resets when the page is refreshed.</p></div>
+        {reportName === 'record' && selectedEntry ? <div className="dialog-scroll"><div className={`record-detail-hero ${selectedEntry.kind.toLowerCase()}`}>{selectedEntry.kind === 'Metrics' ? <FlaskConical size={26} /> : <ClipboardCheck size={26} />}<span><small>{selectedEntry.kind.toUpperCase()} RECORD</small><strong>{selectedEntry.detail}</strong></span></div>{selectedEntry.kind === 'Metrics' ? <div className="record-detail-grid">{metricDefinitions.map((item) => <span key={item.key}><small>{item.name} · {item.short}</small><strong>{metrics[item.key]}</strong><em>{item.unit}</em></span>)}</div> : <div className="record-detail-list">{[['Sleep', `${daily.sleep} hours`], ['Activity', `${daily.activity} minutes`], ['Meals', daily.meals], ['Medication', daily.medication], ['Alcohol', daily.alcohol], ['Symptoms', daily.symptoms]].map(([label, value]) => <span key={label}><small>{label}</small><strong>{value}</strong></span>)}</div>}<p className="disclaimer">This is a demonstration record and resets when the page is refreshed.</p></div>
         : reportName === 'single' ? <div className="dialog-scroll"><div className="analysis-hero"><span><ScanFace size={28} /></span><div><small>IMAGE QUALITY</small><strong>Suitable for comparison</strong><p>Lighting, position and focus passed the demo check.</p></div></div><div className="feature-table">{tongueFeatures.slice(0, isVip ? 5 : 3).map(([label, value, trend]) => <div key={label}><span><small>{label}</small><strong>{value}</strong></span><em>{trend}</em></div>)}</div>{!isVip ? <button className="vip-callout" onClick={() => setPlan('vip')}><LockKeyhole size={18} /><span><strong>Unlock the full analysis</strong><small>VIP adds moisture, cracks, tooth marks and deeper longitudinal context.</small></span><ChevronRight size={16} /></button> : <div className="insight"><Sparkles size={18} /><span><strong>VIP longitudinal note</strong><p>Your tongue coating appears slightly lighter than last month. Continue capturing under similar conditions so the trend remains comparable.</p></span></div>}<p className="disclaimer">This describes visible features and recorded change. It does not identify a cause or provide a diagnosis.</p></div>
         : reportName === 'monthly' ? <div className="dialog-scroll"><div className="monthly-score"><span><small>RECORD COMPLETION</small><strong>25 / 30</strong><em>days</em></span><TrendingUp size={30} /></div><div className="trend-block"><div><span>Coating appearance</span><strong>Mostly stable</strong></div><div className="trend-line"><i /><i /><i /><i /><i /><i /><i /></div><p>Recent images remained within your personal recorded range.</p></div><div className="metric-row"><span><Weight size={17} /><em>Weight</em><strong>68.4 kg</strong><small>−0.7 kg</small></span><span><FlaskConical size={17} /><em>ALT</em><strong>{metrics.alt} U/L</strong><small>Latest value</small></span></div><div className="insight"><Info size={18} /><span><strong>Review at your next visit</strong><p>One laboratory value changed from the previous report. Keep the original report available for professional interpretation.</p></span></div><p className="disclaimer">Trend information is for follow-up preparation and does not estimate disease stage.</p></div>
         : reportName === 'visit' ? <div className="dialog-scroll">{!isVip ? <><div className="vip-cover"><Crown size={30} /><strong>Monthly trend reports are a VIP feature</strong><p>Combine tongue records, health indicators and daily factors in one longitudinal view.</p></div><button className="primary" onClick={() => { setPlan('vip'); setReportName('monthly'); }}>Preview VIP report<Crown size={17} /></button></> : <><div className="visit-list"><span><CheckCircle2 size={17} /><p><strong>25 of 30 check-ins completed</strong>Good record continuity this month.</p></span><span><FlaskConical size={17} /><p><strong>Five indicators available</strong>Bring your original laboratory report.</p></span><span><Moon size={17} /><p><strong>Fatigue followed shorter sleep twice</strong>This is a recorded pattern, not a confirmed cause.</p></span></div><label className="question-box">Question for my next visit<textarea defaultValue="Could shorter sleep be contributing to my recent fatigue?" /></label></>}</div>
