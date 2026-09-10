@@ -58,7 +58,6 @@ export default function Page() {
   const [metrics, setMetrics] = useState({ bmi: '23.7', alt: '38', ast: '29', ggt: '42', tg: '1.6' });
   const [daily, setDaily] = useState({ sleep: '7.0', activity: '35', meals: 'Balanced', medication: 'Taken as planned', alcohol: 'None', symptoms: 'No new symptoms' });
   const isVip = plan === 'vip';
-  const completed = Object.values(done).filter(Boolean).length;
   const todayLabel = useMemo(() => new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', weekday: 'long' }).format(new Date(2026, 8, 10)), []);
 
   const addEntry = (kind: HealthEntry['kind'], title: string, detail: string) => setEntries((current) => [
@@ -97,12 +96,6 @@ export default function Page() {
     setWindowName(null);
   };
 
-  const taskRows = [
-    { value: 'capture', icon: Camera, title: 'Tongue capture', note: done.capture ? 'Completed today · Report ready' : '2 min · Best before breakfast', action: 'Start capture', open: () => { setCaptureStep(photo ? 'review' : 'capture'); setWindowName('capture' as const); }, complete: done.capture },
-    { value: 'metrics', icon: FlaskConical, title: 'Health indicators', note: done.metrics ? 'Updated today' : 'Upload a report or enter values', action: 'Add health check', open: () => { setMetricsStep('choose'); setWindowName('metrics'); }, complete: done.metrics },
-    { value: 'daily', icon: ClipboardCheck, title: 'Daily health record', note: done.daily ? 'Completed today' : 'Sleep, activity, meals and medication', action: 'Add daily record', open: () => setWindowName('daily' as const), complete: done.daily },
-  ];
-
   return (
     <main className="stage">
       <header className="brandbar">
@@ -115,25 +108,23 @@ export default function Page() {
         <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="app-shell">
           <div className="screen">
             <TabsContent value="home" className="page">
-              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>Good morning, Alex</h1></div><button className="icon-button" aria-label="Notifications"><Bell size={19} /></button></div>
-              <section className="day-overview">
-                <div><span className="eyebrow">TODAY</span><strong>{completed} of 3 tasks</strong><p>{completed === 3 ? 'Everything is complete.' : 'A few small steps keep your health record current.'}</p></div>
-                <div className="progress-ring" style={{ '--progress': `${(completed / 3) * 360}deg` } as React.CSSProperties}><span>{completed}/3</span></div>
+              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>舌象智能检测</h1></div><button className="icon-button" aria-label="通知"><Bell size={19} /></button></div>
+              <section className={done.capture ? 'tongue-focus complete' : 'tongue-focus'}>
+                <div className="tongue-focus-top"><span className="focus-icon">{done.capture ? <CheckCircle2 size={30} /> : <ScanFace size={32} />}</span><span className="focus-status">{done.capture ? '今日已完成' : '建议晨起、进食前拍摄'}</span></div>
+                <h2>{done.capture ? '今日舌象已完成分析' : '拍摄舌象，获取 AI 分析'}</h2>
+                <p>约 2 分钟完成拍摄。AI 将检查照片质量，并识别舌色、舌苔和舌体形态。</p>
+                <div className="focus-steps"><span><i>1</i>引导拍摄</span><span><i>2</i>AI 分析</span><span><i>3</i>查看报告</span></div>
+                <button className="focus-action" onClick={() => { setCaptureStep(photo ? 'review' : 'capture'); setWindowName('capture'); }}><Camera size={19} />{done.capture ? '再次检测' : '开始舌象检测'}<ChevronRight size={18} /></button>
               </section>
-              <div className="section-heading"><h2>Today’s tasks</h2><span>Tap to expand</span></div>
-              <div className="task-list">
-                {taskRows.map((task) => {
-                  const Icon = task.icon;
-                  return (
-                    <details key={task.value} className={task.complete ? 'task-item complete' : 'task-item'}>
-                      <summary className="task-trigger"><span className="task-icon">{task.complete ? <Check size={18} /> : <Icon size={19} />}</span><span className="task-copy"><strong>{task.title}</strong><small>{task.note}</small></span><ChevronRight className="task-chevron" size={17} /></summary>
-                      <div className="task-content"><p>{task.value === 'capture' ? 'We will guide distance, mouth position, lighting and focus in a separate capture window.' : task.value === 'metrics' ? 'Only the indicators due today appear in the entry window.' : 'Your lifestyle details stay together in one quick form.'}</p><button className="primary compact" onClick={task.open}>{task.complete ? 'Update again' : task.action}<ChevronRight size={17} /></button></div>
-                    </details>
-                  );
-                })}
-              </div>
-              <button className="latest-report" onClick={() => setReportName('single')}><span className="report-symbol"><FileHeart size={21} /></span><span><small>LATEST REPORT · SEP 9</small><strong>Tongue analysis is ready</strong><em>Coating remained within your recent range</em></span><ChevronRight size={18} /></button>
-              <button className="month-preview" onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div><span className="eyebrow">30-DAY VIEW</span><strong>Health trend</strong><p>{isVip ? 'Tongue and metabolic indicators in one monthly view.' : 'Preview the monthly report available with VIP.'}</p></div><TrendingUp size={25} /></button>
+              <button className="latest-report" onClick={() => setReportName('single')}><span className="report-symbol"><FileHeart size={21} /></span><span><small>最近一次 · 9月9日</small><strong>查看舌象 AI 分析报告</strong><em>舌苔较上次稍淡，整体处于近期记录范围</em></span><ChevronRight size={18} /></button>
+              <details className="supporting-info">
+                <summary><span><strong>辅助信息</strong><small>帮助理解舌象变化的背景，可选择填写</small></span><ChevronRight size={18} /></summary>
+                <div className="supporting-actions">
+                  <button onClick={() => { setMetricsStep('choose'); setWindowName('metrics'); }}><span><FlaskConical size={18} /></span><div><strong>体检指标</strong><small>{done.metrics ? '今日已更新' : '上传化验单或手动填写'}</small></div><ChevronRight size={16} /></button>
+                  <button onClick={() => setWindowName('daily')}><span><ClipboardCheck size={18} /></span><div><strong>生活记录</strong><small>{done.daily ? '今日已记录' : '睡眠、饮食、活动等'}</small></div><ChevronRight size={16} /></button>
+                </div>
+              </details>
+              <button className="month-preview" onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div><span className="eyebrow">30天舌象趋势</span><strong>观察舌象的连续变化</strong><p>{isVip ? '对比舌色、舌苔与舌体形态的变化。' : 'VIP 可查看连续舌象趋势报告。'}</p></div><TrendingUp size={25} /></button>
             </TabsContent>
 
             <TabsContent value="records" className="page">
@@ -145,11 +136,10 @@ export default function Page() {
             </TabsContent>
 
             <TabsContent value="reports" className="page">
-              <div className="page-top"><div><span className="eyebrow">ANALYSIS</span><h1>Your reports</h1></div><BarChart3 size={23} /></div>
-              <button className="report-card featured" onClick={() => setReportName('single')}><div className="report-card-top"><span className="report-symbol"><ScanFace size={21} /></span><span className="report-tag">LATEST</span></div><strong>Single tongue analysis</strong><p>Sep 9 · Quality passed · 5 visible features summarized</p><div className="report-foot"><span>Open report</span><ChevronRight size={17} /></div></button>
-              <button className={isVip ? 'report-card' : 'report-card locked'} onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div className="report-card-top"><span className="report-symbol"><TrendingUp size={21} /></span>{!isVip && <LockKeyhole size={17} />}</div><strong>September health trend</strong><p>Longitudinal tongue features, metabolic indicators and daily factors.</p><div className="mini-chart" aria-label="Illustrative monthly trend"><i style={{ height: '36%' }} /><i style={{ height: '52%' }} /><i style={{ height: '44%' }} /><i style={{ height: '68%' }} /><i style={{ height: '62%' }} /><i style={{ height: '74%' }} /></div><div className="report-foot"><span>{isVip ? 'Open monthly report' : 'Preview VIP report'}</span><ChevronRight size={17} /></div></button>
-              <button className="report-card" onClick={() => setReportName('visit')}><div className="report-card-top"><span className="report-symbol"><ClipboardCheck size={21} /></span><span className="report-tag neutral">PREP</span></div><strong>Visit preparation</strong><p>Review your recent changes and prepare questions for your next appointment.</p><div className="report-foot"><span>Open summary</span><ChevronRight size={17} /></div></button>
-              <p className="disclaimer">Reports describe recorded patterns. They do not diagnose disease or replace medical advice.</p>
+              <div className="page-top"><div><span className="eyebrow">AI ANALYSIS</span><h1>舌象分析报告</h1></div><BarChart3 size={23} /></div>
+              <button className="report-card featured" onClick={() => setReportName('single')}><div className="report-card-top"><span className="report-symbol"><ScanFace size={21} /></span><span className="report-tag">最近一次</span></div><strong>单次舌象智能分析</strong><p>9月9日 · 照片质量合格 · 已归纳 5 项可见特征</p><div className="report-foot"><span>查看分析</span><ChevronRight size={17} /></div></button>
+              <button className={isVip ? 'report-card' : 'report-card locked'} onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div className="report-card-top"><span className="report-symbol"><TrendingUp size={21} /></span>{!isVip && <LockKeyhole size={17} />}</div><strong>30天舌象变化趋势</strong><p>连续对比舌色、舌苔、舌体形态和其他可见特征。</p><div className="mini-chart" aria-label="舌象变化趋势示意"><i style={{ height: '36%' }} /><i style={{ height: '52%' }} /><i style={{ height: '44%' }} /><i style={{ height: '68%' }} /><i style={{ height: '62%' }} /><i style={{ height: '74%' }} /></div><div className="report-foot"><span>{isVip ? '查看趋势报告' : '预览 VIP 趋势'}</span><ChevronRight size={17} /></div></button>
+              <p className="disclaimer">分析用于描述照片中的可见舌象特征与记录变化，不提供疾病诊断。</p>
             </TabsContent>
 
             <TabsContent value="profile" className="page">
@@ -165,7 +155,7 @@ export default function Page() {
               <p className="disclaimer">TongueCare patient prototype · Demo data · v2.0</p>
             </TabsContent>
           </div>
-          <TabsList className="bottomnav" aria-label="Main navigation"><TabsTrigger value="home"><Home /><span>Home</span></TabsTrigger><TabsTrigger value="records"><FolderHeart /><span>Records</span></TabsTrigger><TabsTrigger value="reports"><FileHeart /><span>Reports</span></TabsTrigger><TabsTrigger value="profile"><UserRound /><span>Me</span></TabsTrigger></TabsList>
+          <TabsList className="bottomnav" aria-label="主导航"><TabsTrigger value="home"><Home /><span>检测</span></TabsTrigger><TabsTrigger value="records"><FolderHeart /><span>记录</span></TabsTrigger><TabsTrigger value="reports"><FileHeart /><span>报告</span></TabsTrigger><TabsTrigger value="profile"><UserRound /><span>我的</span></TabsTrigger></TabsList>
         </Tabs>
       </div>
       <footer className="stage-footer">TongueCare · Patient experience prototype</footer>
