@@ -9,7 +9,6 @@ import {
   LockKeyhole, Moon, Pill, ScanFace, ShieldCheck, Signal, Sparkles,
   TrendingUp, UserRound, Utensils, Weight, Wifi,
 } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
@@ -101,17 +100,17 @@ export default function Page() {
                 <div className="progress-ring" style={{ '--progress': `${(completed / 3) * 360}deg` } as React.CSSProperties}><span>{completed}/3</span></div>
               </section>
               <div className="section-heading"><h2>Today’s tasks</h2><span>Tap to expand</span></div>
-              <Accordion defaultValue={['capture']} className="task-list">
+              <div className="task-list">
                 {taskRows.map((task) => {
                   const Icon = task.icon;
                   return (
-                    <AccordionItem value={task.value} key={task.value} className={task.complete ? 'task-item complete' : 'task-item'}>
-                      <AccordionTrigger className="task-trigger"><span className="task-icon">{task.complete ? <Check size={18} /> : <Icon size={19} />}</span><span className="task-copy"><strong>{task.title}</strong><small>{task.note}</small></span></AccordionTrigger>
-                      <AccordionContent className="task-content"><p>{task.value === 'capture' ? 'We will guide distance, mouth position, lighting and focus in a separate capture window.' : task.value === 'metrics' ? 'Only the indicators due today appear in the entry window.' : 'Your lifestyle details stay together in one quick form.'}</p><button className="primary compact" onClick={task.open}>{task.complete ? 'Update again' : task.action}<ChevronRight size={17} /></button></AccordionContent>
-                    </AccordionItem>
+                    <details key={task.value} className={task.complete ? 'task-item complete' : 'task-item'}>
+                      <summary className="task-trigger"><span className="task-icon">{task.complete ? <Check size={18} /> : <Icon size={19} />}</span><span className="task-copy"><strong>{task.title}</strong><small>{task.note}</small></span><ChevronRight className="task-chevron" size={17} /></summary>
+                      <div className="task-content"><p>{task.value === 'capture' ? 'We will guide distance, mouth position, lighting and focus in a separate capture window.' : task.value === 'metrics' ? 'Only the indicators due today appear in the entry window.' : 'Your lifestyle details stay together in one quick form.'}</p><button className="primary compact" onClick={task.open}>{task.complete ? 'Update again' : task.action}<ChevronRight size={17} /></button></div>
+                    </details>
                   );
                 })}
-              </Accordion>
+              </div>
               <button className="latest-report" onClick={() => setReportName('single')}><span className="report-symbol"><FileHeart size={21} /></span><span><small>LATEST REPORT · SEP 9</small><strong>Tongue analysis is ready</strong><em>Coating remained within your recent range</em></span><ChevronRight size={18} /></button>
               <button className="month-preview" onClick={() => setReportName(isVip ? 'monthly' : 'visit')}><div><span className="eyebrow">30-DAY VIEW</span><strong>Health trend</strong><p>{isVip ? 'Tongue and metabolic indicators in one monthly view.' : 'Preview the monthly report available with VIP.'}</p></div><TrendingUp size={25} /></button>
             </TabsContent>
