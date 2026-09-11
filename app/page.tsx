@@ -41,6 +41,8 @@ const metricDefinitions = [
   { key: 'tg', name: '甘油三酯', short: 'TG', unit: 'mmol/L', range: '0.3–1.7', help: '血液中的一种脂肪，通常是血脂检查的一部分。' },
 ] as const;
 
+const medicalDisclaimer = '本摘要只整理舌象照片中的可见特征和历史记录变化，不能用于诊断MASLD或判断病情进展，也不能代替医院检查和医生评估';
+
 export default function Page() {
   const [tab, setTab] = useState('home');
   const [windowName, setWindowName] = useState<WindowName>(null);
@@ -57,6 +59,12 @@ export default function Page() {
   const [done, setDone] = useState({ capture: false, metrics: false, daily: false });
   const [metrics, setMetrics] = useState({ bmi: '23.7', alt: '38', ast: '29', ggt: '42', tg: '1.6' });
   const [daily, setDaily] = useState({ sleep: '7.0', activity: '35', meals: '均衡', medication: '按计划服用', alcohol: '无', symptoms: '没有新症状' });
+  const [visitPrep, setVisitPrep] = useState({
+    recent: '近期舌苔以薄白为主，与上次相比稍淡，整体处于个人记录范围内。',
+    concern: '最近睡眠时间较短时更容易感到疲劳。',
+    doctorNote: '想请医生结合检查结果说明这些变化是否需要继续观察。',
+  });
+  const [visitSaved, setVisitSaved] = useState(false);
   const isVip = plan === 'vip';
   const todayLabel = useMemo(() => new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(new Date(2026, 8, 10)), []);
 
@@ -99,7 +107,7 @@ export default function Page() {
   return (
     <main className="stage">
       <header className="brandbar">
-        <div className="brand"><span className="logo"><Activity size={22} /></span><span>舌康智能检测</span><span className={isVip ? 'edition vip' : 'edition'}>{isVip ? '高级版' : '基础版'}</span></div>
+        <div className="brand"><span className="logo"><Activity size={22} /></span><span>舌康舌象记录</span><span className={isVip ? 'edition vip' : 'edition'}>{isVip ? '高级版' : '基础版'}</span></div>
         <div className="plan-preview" aria-label="会员版本预览"><button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>基础版</button><button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}><Crown size={13} /> 高级版</button></div>
       </header>
 
@@ -108,13 +116,13 @@ export default function Page() {
         <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="app-shell">
           <div className="screen">
             <TabsContent value="home" className="page">
-              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>舌象智能检测</h1></div><button className="icon-button" aria-label="通知"><Bell size={19} /></button></div>
+              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>每日舌象记录</h1></div><button className="icon-button" aria-label="通知"><Bell size={19} /></button></div>
               <section className={done.capture ? 'tongue-focus complete' : 'tongue-focus'}>
                 <div className="tongue-focus-top"><span className="focus-icon">{done.capture ? <CheckCircle2 size={30} /> : <ScanFace size={32} />}</span><span className="focus-status">{done.capture ? '今日已完成' : '建议晨起、进食前拍摄'}</span></div>
-                <h2>{done.capture ? '今日舌象已完成分析' : '拍摄舌象，获取智能分析'}</h2>
+                <h2>{done.capture ? '今日舌象记录已整理' : '拍摄舌象，记录每日变化'}</h2>
                 <p>约 2 分钟完成拍摄。系统将检查照片质量，并识别舌色、舌苔和舌体形态。</p>
                 <div className="focus-steps"><span><i>1</i>引导拍摄</span><span><i>2</i>智能分析</span><span><i>3</i>查看报告</span></div>
-                <button className="focus-action" onClick={() => { setCaptureStep(photo ? 'review' : 'capture'); setWindowName('capture'); }}><Camera size={19} />{done.capture ? '再次检测' : '开始舌象检测'}<ChevronRight size={18} /></button>
+                <button className="focus-action" onClick={() => { setCaptureStep(photo ? 'review' : 'capture'); setWindowName('capture'); }}><Camera size={19} />{done.capture ? '再次记录' : '开始舌象记录'}<ChevronRight size={18} /></button>
               </section>
               <button className="latest-report" onClick={() => setReportName('single')}><span className="report-symbol"><FileHeart size={21} /></span><span><small>最近一次 · 9月9日</small><strong>查看舌象智能分析报告</strong><em>舌苔较上次稍淡，整体处于近期记录范围</em></span><ChevronRight size={18} /></button>
               <details className="supporting-info">
@@ -125,21 +133,23 @@ export default function Page() {
                 </div>
               </details>
               <button className="month-preview" onClick={() => setReportName('monthly')}><div><span className="eyebrow">30天舌象趋势</span><strong>观察舌象的连续变化</strong><p>{isVip ? '对比舌色、舌苔与舌体形态的变化。' : '高级版可查看连续舌象趋势报告。'}</p></div><TrendingUp size={25} /></button>
+              <p className="disclaimer page-disclaimer">{medicalDisclaimer}</p>
             </TabsContent>
 
             <TabsContent value="records" className="page">
-              <div className="page-top"><div><span className="eyebrow">历史记录</span><h1>我的检测记录</h1></div><CalendarDays size={22} /></div>
+              <div className="page-top"><div><span className="eyebrow">历史记录</span><h1>我的舌象记录</h1></div><CalendarDays size={22} /></div>
               <div className="record-summary"><span><strong>{entries.length}</strong><small>全部记录</small></span><span><strong>12</strong><small>舌象照片</small></span><span><strong>5</strong><small>体检指标</small></span></div>
               <div className="section-heading"><h2>最近记录</h2><span>按时间倒序</span></div>
               <div className="timeline">{entries.map((entry) => <button key={entry.id} onClick={() => { setSelectedEntry(entry); setReportName(entry.kind === 'Tongue' ? 'single' : 'record'); }}><span className={`timeline-icon ${entry.kind.toLowerCase()}`}>{entry.kind === 'Tongue' ? <FileImage size={19} /> : entry.kind === 'Metrics' ? <FlaskConical size={19} /> : <ClipboardCheck size={19} />}</span><span><small>{entry.date}</small><strong>{entry.title}</strong><em>{entry.detail}</em></span><ChevronRight size={16} /></button>)}</div>
-              <p className="disclaimer">当前为演示记录，刷新页面后会恢复初始状态。</p>
+              <p className="demo-note">当前为演示记录，刷新页面后会恢复初始状态。</p>
+              <p className="disclaimer page-disclaimer">{medicalDisclaimer}</p>
             </TabsContent>
 
             <TabsContent value="reports" className="page">
-              <div className="page-top"><div><span className="eyebrow">智能分析</span><h1>舌象分析报告</h1></div><BarChart3 size={23} /></div>
+              <div className="page-top"><div><span className="eyebrow">记录整理</span><h1>舌象记录报告</h1></div><BarChart3 size={23} /></div>
               <button className="report-overview" onClick={() => setReportName('single')}>
                 <div className="overview-top"><span className="overview-icon"><ScanFace size={25} /></span><span className="overview-plan">{isVip ? '高级版深度报告' : '基础健康报告'}</span></div>
-                <div className="overview-title"><small>9月9日 · 最近一次检测</small><strong>本次舌象整体较稳定</strong><p>{isVip ? '已完成5项舌象特征与连续变化分析' : '已完成3项核心舌象特征分析'}</p></div>
+                <div className="overview-title"><small>9月9日 · 最近一次记录</small><strong>本次舌象整体较稳定</strong><p>{isVip ? '已完成5项舌象特征与连续变化分析' : '已完成3项核心舌象特征分析'}</p></div>
                 <div className="overview-metrics"><span><small>舌色</small><strong>淡红</strong></span><span><small>舌苔</small><strong>薄白</strong></span><span><small>照片质量</small><strong>合格</strong></span></div>
                 <div className="overview-action"><span>{isVip ? '查看深度报告' : '查看精简报告'}</span><ChevronRight size={18} /></div>
               </button>
@@ -147,9 +157,9 @@ export default function Page() {
               <div className="section-heading report-tools-heading"><h2>趋势与复诊工具</h2><span>{isVip ? '高级版已启用' : '基础功能可用'}</span></div>
               <div className="report-tool-list">
                 <button onClick={() => setReportName('monthly')}><span className="tool-icon"><TrendingUp size={20} /></span><span className="tool-copy"><strong>30天舌象变化趋势</strong><small>{isVip ? '按周对比并结合辅助信息深度分析' : '查看精简的整体变化趋势'}</small></span><em>{isVip ? '深度版' : '精简版'}</em><ChevronRight size={16} /></button>
-                <button onClick={() => setReportName('visit')}><span className="tool-icon gold"><ClipboardCheck size={20} /></span><span className="tool-copy"><strong>智能复诊准备</strong><small>{isVip ? '完整个性化摘要与可编辑问题' : '基础摘要与建议问题'}</small></span><em>{isVip ? '个性化' : '基础'}</em><ChevronRight size={16} /></button>
+                <button onClick={() => setReportName('visit')}><span className="tool-icon gold"><ClipboardCheck size={20} /></span><span className="tool-copy"><strong>复诊前情况整理</strong><small>编辑近期情况、主要担忧和想向医生说明的内容</small></span><em>{isVip ? '个性化' : '基础'}</em><ChevronRight size={16} /></button>
               </div>
-              <p className="disclaimer">报告用于描述照片中的可见舌象特征和记录变化，不提供疾病诊断。</p>
+              <p className="disclaimer page-disclaimer">{medicalDisclaimer}</p>
             </TabsContent>
 
             <TabsContent value="profile" className="page">
@@ -158,17 +168,18 @@ export default function Page() {
               <section className="membership-card"><div><Crown size={20} /><span><strong>{isVip ? '高级版已启用' : '基础版会员'}</strong><small>{isVip ? '完整单次报告和连续趋势分析' : '舌象拍摄、记录和基础分析'}</small></span></div><div className="membership-switch"><button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>基础版</button><button className={isVip ? 'active' : ''} onClick={() => setPlan('vip')}>高级版</button></div></section>
               <div className="menu-list">
                 <button onClick={() => setReportName('hospital')}><Building2 size={19} /><span><strong>医院关怀计划</strong><small>{hospitalLinked ? '已连接 · 高级版关怀期生效中' : '连接后可获得医院提供的高级版权益'}</small></span><ChevronRight size={16} /></button>
-                <div><Bell size={19} /><span><strong>每日提醒</strong><small>提醒完成当天的舌象检测</small></span><Switch checked={reminder} onCheckedChange={setReminder} /></div>
+                <div><Bell size={19} /><span><strong>每日提醒</strong><small>提醒完成当天的舌象记录</small></span><Switch checked={reminder} onCheckedChange={setReminder} /></div>
                 <button onClick={() => setReportName('privacy')}><ShieldCheck size={19} /><span><strong>隐私与数据</strong><small>管理照片和记录的使用方式</small></span><ChevronRight size={16} /></button>
                 <button onClick={() => setReportName('help')}><CircleHelp size={19} /><span><strong>使用帮助</strong><small>了解患者端演示功能</small></span><ChevronRight size={16} /></button>
               </div>
-              <p className="disclaimer">舌康患者端原型 · 演示数据 · 2.0版</p>
+              <p className="demo-note">舌康患者端原型 · 演示数据 · 2.0版</p>
+              <p className="disclaimer page-disclaimer">{medicalDisclaimer}</p>
             </TabsContent>
           </div>
-          <TabsList className="bottomnav" aria-label="主导航"><TabsTrigger value="home"><Home /><span>检测</span></TabsTrigger><TabsTrigger value="records"><FolderHeart /><span>记录</span></TabsTrigger><TabsTrigger value="reports"><FileHeart /><span>报告</span></TabsTrigger><TabsTrigger value="profile"><UserRound /><span>我的</span></TabsTrigger></TabsList>
+          <TabsList className="bottomnav" aria-label="主导航"><TabsTrigger value="home"><Home /><span>今日</span></TabsTrigger><TabsTrigger value="records"><FolderHeart /><span>记录</span></TabsTrigger><TabsTrigger value="reports"><FileHeart /><span>报告</span></TabsTrigger><TabsTrigger value="profile"><UserRound /><span>我的</span></TabsTrigger></TabsList>
         </Tabs>
       </div>
-      <footer className="stage-footer">舌康智能检测 · 患者端体验原型</footer>
+      <footer className="stage-footer">舌康舌象记录 · 患者端体验原型</footer>
 
       <Sheet open={windowName === 'capture'} onOpenChange={(open) => !open && setWindowName(null)}>
         <SheetContent side="bottom" className="task-sheet capture-sheet">
@@ -245,14 +256,14 @@ export default function Page() {
 
       <Sheet open={windowName === 'daily'} onOpenChange={(open) => !open && setWindowName(null)}><SheetContent side="bottom" className="task-sheet"><SheetHeader><SheetTitle>每日生活记录</SheetTitle><SheetDescription>简单记录今天的生活情况，作为舌象变化的辅助信息。</SheetDescription></SheetHeader><div className="sheet-body daily-form"><label><Moon size={17} /><span>睡眠<input value={daily.sleep} onChange={(event) => setDaily({ ...daily, sleep: event.target.value })} inputMode="decimal" /></span><em>小时</em></label><label><Activity size={17} /><span>活动<input value={daily.activity} onChange={(event) => setDaily({ ...daily, activity: event.target.value })} inputMode="numeric" /></span><em>分钟</em></label><label><Utensils size={17} /><span>饮食<select value={daily.meals} onChange={(event) => setDaily({ ...daily, meals: event.target.value })}><option>均衡</option><option>清淡</option><option>高油脂</option><option>不规律</option></select></span></label><label><Pill size={17} /><span>用药<select value={daily.medication} onChange={(event) => setDaily({ ...daily, medication: event.target.value })}><option>按计划服用</option><option>漏服一次</option><option>有所调整</option><option>不适用</option></select></span></label><label><Activity size={17} /><span>饮酒<select value={daily.alcohol} onChange={(event) => setDaily({ ...daily, alcohol: event.target.value })}><option>无</option><option>一杯</option><option>两杯或更多</option></select></span></label><label className="wide"><Info size={17} /><span>身体感受<textarea value={daily.symptoms} onChange={(event) => setDaily({ ...daily, symptoms: event.target.value })} /></span></label><button className="primary" onClick={saveDaily}>保存今日记录<Check size={18} /></button></div></SheetContent></Sheet>
 
-      <Dialog open={!!reportName} onOpenChange={(open) => !open && setReportName(null)}><DialogContent className="report-dialog"><DialogTitle>{reportName === 'record' ? selectedEntry?.title ?? '记录详情' : reportName === 'single' ? '单次舌象智能分析' : reportName === 'monthly' ? '9月舌象变化趋势' : reportName === 'visit' ? '智能复诊准备' : reportName === 'hospital' ? '医院关怀计划' : reportName === 'privacy' ? '隐私与数据' : '使用帮助'}</DialogTitle><DialogDescription>{reportName === 'record' ? selectedEntry?.date ?? '健康记录' : reportName === 'single' ? '9月10日 · 患者报告' : reportName === 'visit' ? '根据你的近期记录自动整理' : '舌康患者端体验'}</DialogDescription>
+      <Dialog open={!!reportName} onOpenChange={(open) => !open && setReportName(null)}><DialogContent className="report-dialog"><DialogTitle>{reportName === 'record' ? selectedEntry?.title ?? '记录详情' : reportName === 'single' ? '单次舌象记录摘要' : reportName === 'monthly' ? '9月舌象变化趋势' : reportName === 'visit' ? '复诊前情况整理' : reportName === 'hospital' ? '医院关怀计划' : reportName === 'privacy' ? '隐私与数据' : '使用帮助'}</DialogTitle><DialogDescription>{reportName === 'record' ? selectedEntry?.date ?? '健康记录' : reportName === 'single' ? '9月10日 · 患者报告' : reportName === 'visit' ? '编辑近期情况、主要担忧和想向医生说明的内容' : '舌康患者端体验'}</DialogDescription>
         {reportName === 'record' && selectedEntry ? <div className="dialog-scroll"><div className={`record-detail-hero ${selectedEntry.kind.toLowerCase()}`}>{selectedEntry.kind === 'Metrics' ? <FlaskConical size={26} /> : <ClipboardCheck size={26} />}<span><small>{selectedEntry.kind === 'Metrics' ? '体检指标记录' : '每日生活记录'}</small><strong>{selectedEntry.detail}</strong></span></div>{selectedEntry.kind === 'Metrics' ? <div className="record-detail-grid">{metricDefinitions.map((item) => <span key={item.key}><small>{item.name} · {item.short}</small><strong>{metrics[item.key]}</strong><em>{item.unit}</em></span>)}</div> : <div className="record-detail-list">{[['睡眠', `${daily.sleep} 小时`], ['活动', `${daily.activity} 分钟`], ['饮食', daily.meals], ['用药', daily.medication], ['饮酒', daily.alcohol], ['身体感受', daily.symptoms]].map(([label, value]) => <span key={label}><small>{label}</small><strong>{value}</strong></span>)}</div>}<p className="disclaimer">当前为演示记录，刷新页面后会恢复初始状态。</p></div>
         : reportName === 'single' ? <div className="dialog-scroll"><div className="analysis-hero"><span><ScanFace size={28} /></span><div><small>照片质量</small><strong>适合进行对比</strong><p>光线、位置和清晰度均通过演示检查。</p></div></div><div className="feature-table">{tongueFeatures.slice(0, isVip ? 5 : 3).map(([label, value, trend]) => <div key={label}><span><small>{label}</small><strong>{value}</strong></span><em>{trend}</em></div>)}</div>{!isVip ? <button className="vip-callout" onClick={() => setPlan('vip')}><LockKeyhole size={18} /><span><strong>解锁完整分析</strong><small>高级版增加湿润度、裂纹、齿痕和更详细的连续变化信息。</small></span><ChevronRight size={16} /></button> : <div className="insight"><Sparkles size={18} /><span><strong>连续变化提示</strong><p>与上月相比，你的舌苔看起来稍淡。建议继续在相似条件下拍摄，以便保持趋势可比性。</p></span></div>}<p className="disclaimer">报告描述照片中的可见特征和记录变化，不判断原因，也不提供疾病诊断。</p></div>
         : reportName === 'monthly' ? <div className="dialog-scroll">{!isVip ? <><div className="monthly-score basic"><span><small>近30天记录</small><strong>8</strong><em>次</em></span><TrendingUp size={30} /></div><div className="trend-block"><div><span>舌苔整体趋势</span><strong>较稳定</strong></div><div className="trend-line"><i /><i /><i /><i /><i /><i /><i /></div><p>最近记录中的舌苔以薄白为主，整体未见明显持续变化。</p></div><div className="basic-trend-summary"><span><CheckCircle2 size={17} /><p><strong>舌色</strong>以淡红为主</p></span><span><CheckCircle2 size={17} /><p><strong>舌体形态</strong>近期记录基本一致</p></span></div><div className="vip-callout" role="note"><Crown size={18} /><span><strong>高级版增加深度分析</strong><small>提供按周对比、更多舌象特征，以及体检指标和生活因素的关联整理。</small></span></div><p className="disclaimer">这是基础版精简趋势报告，用于回顾记录变化，不用于疾病诊断。</p></> : <><div className="monthly-score"><span><small>记录完成度</small><strong>25 / 30</strong><em>天</em></span><TrendingUp size={30} /></div><div className="trend-block"><div><span>舌苔表现</span><strong>整体较稳定</strong></div><div className="trend-line"><i /><i /><i /><i /><i /><i /><i /></div><p>近期舌象照片整体处于你的个人记录范围内。</p></div><div className="metric-row"><span><Weight size={17} /><em>体重</em><strong>68.4 千克</strong><small>减少 0.7 千克</small></span><span><FlaskConical size={17} /><em>丙氨酸氨基转移酶</em><strong>{metrics.alt} U/L</strong><small>最近一次结果</small></span></div><div className="insight"><Info size={18} /><span><strong>辅助信息提示</strong><p>一项体检指标与上次记录不同，建议保留原始化验单，需要时请专业人员解读。</p></span></div><p className="disclaimer">趋势信息用于整理连续记录，不用于判断疾病阶段。</p></>}</div>
-        : reportName === 'visit' ? <div className="dialog-scroll visit-prep">{!isVip ? <><div className="visit-mode"><span>基础摘要</span><small>汇总最近记录，方便复诊前快速回顾</small></div><div className="visit-list"><span><ScanFace size={17} /><p><strong>最近舌象：舌苔薄白</strong>与上次相比稍淡，整体处于近期记录范围。</p></span><span><CheckCircle2 size={17} /><p><strong>近7天完成4次舌象检测</strong>建议尽量在晨起、进食前保持相似条件拍摄。</p></span><span><FlaskConical size={17} /><p><strong>已有5项体检指标</strong>一项数值超出所填参考范围，请携带原始化验单。</p></span></div><div className="question-preview"><div><strong>建议向医生确认</strong><LockKeyhole size={15} /></div><p>“最近舌苔比上次稍淡，需要结合哪些情况观察？”</p><small>基础版可查看建议问题；高级版可以编辑并保存自己的问题。</small></div><button className="vip-callout" onClick={() => setPlan('vip')}><Crown size={18} /><span><strong>查看完整个性化版本</strong><small>增加30天趋势、生活因素整理和可编辑复诊问题。</small></span><ChevronRight size={16} /></button></> : <><div className="visit-mode premium"><span>完整个性化版本</span><small>结合30天舌象、体检指标与生活记录</small></div><div className="visit-list"><span><CheckCircle2 size={17} /><p><strong>30天内完成了25次舌象检测</strong>记录连续性较好，可以进行阶段性对比。</p></span><span><TrendingUp size={17} /><p><strong>舌苔整体稳定，近期稍淡</strong>未见持续加深趋势，建议保持相同拍摄条件。</p></span><span><Moon size={17} /><p><strong>两次疲劳记录出现在睡眠较短之后</strong>这是记录中出现的现象，不能确认因果关系。</p></span><span><FlaskConical size={17} /><p><strong>一项体检指标发生变化</strong>复诊时可携带原始化验单，请专业人员结合其他结果解读。</p></span></div><label className="question-box">准备向医生咨询的问题<textarea defaultValue="最近舌苔较上月稍淡，同时有两次睡眠较短后的疲劳记录，这些变化需要一起观察吗？" /></label><div className="info-line"><Info size={16} />摘要依据当前演示记录整理，不提供诊断或治疗建议。</div></>}</div>
+        : reportName === 'visit' ? <div className="dialog-scroll visit-prep"><div className={isVip ? 'visit-mode premium' : 'visit-mode'}><span>{isVip ? '个性化整理' : '基础情况整理'}</span><small>{isVip ? '结合30天舌象、体检指标与生活记录' : '整理最近记录，方便复诊前快速回顾'}</small></div>{isVip && <div className="visit-list"><span><CheckCircle2 size={17} /><p><strong>30天内完成了25次舌象记录</strong>记录连续性较好，可以进行阶段性对比。</p></span><span><TrendingUp size={17} /><p><strong>舌苔整体稳定，近期稍淡</strong>建议保持相同拍摄条件，继续积累记录。</p></span></div>}<div className="visit-edit-form"><label><span>近期情况</span><textarea value={visitPrep.recent} onChange={(event) => { setVisitSaved(false); setVisitPrep({ ...visitPrep, recent: event.target.value }); }} /></label><label><span>主要担忧</span><textarea value={visitPrep.concern} onChange={(event) => { setVisitSaved(false); setVisitPrep({ ...visitPrep, concern: event.target.value }); }} /></label><label><span>想向医生说明的内容</span><textarea value={visitPrep.doctorNote} onChange={(event) => { setVisitSaved(false); setVisitPrep({ ...visitPrep, doctorNote: event.target.value }); }} /></label></div><button className="primary" onClick={() => setVisitSaved(true)}>{visitSaved ? '已保存本次整理' : '保存复诊前情况'}<Check size={18} /></button><p className="disclaimer">{medicalDisclaimer}</p></div>
         : reportName === 'hospital' ? <div className="dialog-scroll"><div className="hospital-panel"><Building2 size={28} /><strong>{hospitalLinked ? '关怀计划已连接' : '连接医院关怀计划'}</strong><p>{hospitalLinked ? '医院提供的高级版权益有效期至2026年11月30日。' : '输入医院邀请码，即可在关怀期内启用医院提供的高级版权益。'}</p></div>{!hospitalLinked && <><label className="code-field">邀请码<input placeholder="请输入医院提供的邀请码" /></label><button className="primary" onClick={() => { setHospitalLinked(true); setPlan('vip'); setReportName(null); }}>连接演示关怀计划<Check size={17} /></button></>}<p className="disclaimer">本原型仅模拟患者端连接流程，尚未接入真实医院系统。</p></div>
         : reportName === 'privacy' ? <div className="dialog-scroll"><div className="info-line"><ShieldCheck size={18} />照片和健康信息仅保留在当前演示页面中，刷新后会恢复初始状态。</div><p>在数据用于连续分析或共享给关怀计划前，患者可以管理自己的授权。</p></div>
-        : <div className="dialog-scroll"><p>首页突出舌象智能检测，体检指标与生活记录收在“辅助信息”中。历史记录和报告分别放在独立页面。</p><p>本原型中的拍摄引导和智能分析为模拟效果，不提供疾病诊断或紧急监测。</p></div>}
+        : <div className="dialog-scroll"><p>首页突出每日舌象记录，体检指标与生活记录收在“辅助信息”中。历史记录和报告分别放在独立页面。</p><p>本原型中的拍摄引导和智能分析为模拟效果，不提供疾病诊断或紧急监测。</p></div>}
       </DialogContent></Dialog>
     </main>
   );
