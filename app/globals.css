@@ -29,6 +29,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 svg { flex: 0 0 auto; }
 .stage { min-height: 100vh; padding: 28px; background: radial-gradient(circle at 18% 4%, #d8eee8, transparent 35%), linear-gradient(145deg, #edf4f2, #f7faf9); }
 .brandbar { max-width: 1080px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: space-between; }
+.brand-actions { display: flex; align-items: center; gap: 10px; }.hospital-demo-link { min-height: 40px; padding: 0 13px; border: 1px solid #ceded9; border-radius: 12px; background: white; color: #315d55; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 750; text-decoration: none; box-shadow: 0 3px 10px #274c4210; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: .04em; }
 .logo { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 13px; color: white; background: #087f70; box-shadow: 0 10px 25px #087f7030; }
 .edition { padding-left: 12px; border-left: 1px solid #bfd4ce; color: #70827e; font-size: 12px; font-weight: 650; letter-spacing: .02em; }.edition.vip { color: #9a6b10; }

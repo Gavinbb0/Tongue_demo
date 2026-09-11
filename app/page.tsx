@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import {
   Activity, ArrowLeft, BarChart3, BatteryFull, Bell, Building2, CalendarDays, Camera,
@@ -117,7 +118,7 @@ export default function Page() {
     <main className="stage">
       <header className="brandbar">
         <div className="brand"><span className="logo"><Activity size={22} /></span><span>TongueCare</span><span className={isVip ? 'edition vip' : 'edition'}>{isVip ? 'Premium' : 'Basic'}</span></div>
-        <div className="plan-preview" aria-label="Plan preview"><button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>Basic</button><button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}><Crown size={13} /> Premium</button></div>
+        <div className="brand-actions"><Link href="/hospital" className="hospital-demo-link"><Building2 size={15} />Hospital panel</Link><div className="plan-preview" aria-label="Plan preview"><button className={!isVip ? 'active' : ''} onClick={() => setPlan('basic')}>Basic</button><button className={isVip ? 'active vip' : ''} onClick={() => setPlan('vip')}><Crown size={13} /> Premium</button></div></div>
       </header>
 
       <div className="phone">
