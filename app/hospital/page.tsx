@@ -172,6 +172,7 @@ export default function HospitalDashboard() {
             <Tabs defaultValue="summary" className={styles.detailTabs}>
               <TabsList variant="line" className={styles.detailTabList}>
                 <TabsTrigger value="summary">Clinical summary</TabsTrigger>
+                <TabsTrigger value="clinician">Clinician summary</TabsTrigger>
                 <TabsTrigger value="trends">Trends</TabsTrigger>
                 <TabsTrigger value="records">Source records</TabsTrigger>
                 <TabsTrigger value="questions">Patient questions <span className={styles.tabCount}>2</span></TabsTrigger>
@@ -214,6 +215,67 @@ export default function HospitalDashboard() {
                   <article className={styles.reviewCard} id="review-control"><div className={styles.panelHeading}><div><h3>Review control</h3><span>AI model TC-LA 2.4.1 · generated 10 Sep, 21:14</span></div><ShieldCheck size={18} /></div><div className={styles.statusPicker}>{(['Pending', 'Reviewed', 'Follow-up'] as const).map((status) => <button key={status} onClick={() => setReviewStatus(status)} className={reviewStatus === status ? styles.statusActive : ''}>{reviewStatus === status && <Check size={13} />}{status}</button>)}</div><label>Clinical note<textarea value={note} onChange={(event) => { setNote(event.target.value); setSaved(false); }} placeholder="Add a short note for the care team…" /></label><button className={styles.saveButton} onClick={() => setSaved(true)}>{saved ? <><CheckCircle2 size={16} />Saved to demo</> : 'Save review'}</button></article>
                 </div>
                 <p className={styles.clinicalDisclaimer}>Tongue-image findings are descriptive and non-diagnostic. Review flags prioritize information; they do not diagnose disease, recommend treatment, or replace hospital tests.</p>
+              </TabsContent>
+
+              <TabsContent value="clinician" className={styles.tabPanel}>
+                <article className={styles.clinicianDocument}>
+                  <header className={styles.documentHeader}>
+                    <div className={styles.documentMark}><FileText size={22} /></div>
+                    <div><span>EXAMPLE CLINICIAN SUMMARY</span><h3>TongueDx Between-Visit Follow-up Summary</h3><p>Structured for review within the hospital record</p></div>
+                    <span className={styles.confirmedBadge}><CheckCircle2 size={14} />Patient-confirmed</span>
+                  </header>
+
+                  <dl className={styles.patientMetadata}>
+                    <div><dt>Patient</dt><dd>Ms Li, 48 years old</dd></div>
+                    <div><dt>Hospital ID</dt><dd>MASLD-10482</dd></div>
+                    <div><dt>Follow-up period</dt><dd>1 June–10 August 2026</dd></div>
+                    <div><dt>Next scheduled appointment</dt><dd>18 August 2026</dd></div>
+                  </dl>
+
+                  <section className={styles.documentSection}>
+                    <h4>Longitudinal tongue-image analysis</h4>
+                    <div className={styles.findingRows}>
+                      <div><span>Tongue-body colour</span><p>No consistent change from baseline.</p></div>
+                      <div><span>Tongue-coating coverage</span><p>Persistent increase relative to baseline.</p></div>
+                      <div><span>Coating distribution</span><p>Increased coverage in the central tongue region.</p></div>
+                      <div><span>Moisture-related surface appearance</span><p>No persistent change.</p></div>
+                      <div><span>Fissures and tongue-edge features</span><p>No consistent change.</p></div>
+                    </div>
+                    <p className={styles.documentCaution}><ShieldCheck size={15} />These findings are descriptive and non-diagnostic. They do not independently indicate steatosis, inflammation, fibrosis, or MASLD progression.</p>
+                  </section>
+
+                  <div className={styles.documentColumns}>
+                    <section className={styles.documentSection}>
+                      <h4>Patient-reported information</h4>
+                      <ul><li>Increased fatigue during the previous two weeks.</li><li>Three missed medication doses were reported.</li></ul>
+                    </section>
+                    <section className={styles.documentSection}>
+                      <h4>Patient’s editable pre-visit statement</h4>
+                      <blockquote>“I have felt more tired during the past two weeks.”</blockquote>
+                      <blockquote>“I missed several medication doses.”</blockquote>
+                      <blockquote>“I would like to discuss whether I should complete another liver-function test.”</blockquote>
+                    </section>
+                  </div>
+
+                  <section className={styles.documentSection}>
+                    <h4>Relevant clinical data</h4>
+                    <div className={styles.clinicalDataGrid}>
+                      <div><span>ALT</span><strong>58 U/L</strong><small>Laboratory reference range: 7–40 U/L</small></div>
+                      <div><span>AST</span><strong>36 U/L</strong><small>Laboratory reference range: 13–35 U/L</small></div>
+                      <div><span>Platelet count</span><strong>210 × 10⁹/L</strong></div>
+                      <div><span>FIB-4</span><strong>1.08</strong><small>Calculated using the latest available age, AST, ALT and platelet data</small></div>
+                      <div><span>Most recent ultrasound</span><strong>Hepatic steatosis reported</strong></div>
+                      <div><span>Transient elastography</span><strong>No recent result available</strong></div>
+                      <div className={styles.incompleteDatum}><span>Planned liver-function test</span><strong>Not yet completed</strong></div>
+                    </div>
+                  </section>
+
+                  <section className={styles.documentReviewFlag}>
+                    <div><AlertTriangle size={19} /><span><small>REVIEW FLAG</small><strong>Non-urgent</strong></span></div>
+                    <p><strong>Reason:</strong> persistent tongue-image feature changes were observed alongside a patient-confirmed symptom change and an incomplete planned assessment.</p>
+                    <p>This flag prioritises information for clinical review. It does not provide a diagnosis or recommend a test, treatment, or earlier appointment.</p>
+                  </section>
+                </article>
               </TabsContent>
 
               <TabsContent value="trends" className={styles.tabPanel}>
