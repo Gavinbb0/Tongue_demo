@@ -155,7 +155,7 @@ export default function Page() {
         <Tabs value={tab} onValueChange={(value) => setTab(String(value))} className="app-shell">
           <div className="screen">
             <TabsContent value="home" className="page">
-              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>Daily tongue record</h1></div><button className="icon-button" aria-label="Notifications"><Bell size={19} /></button></div>
+              <div className="page-top"><div><span className="eyebrow">{todayLabel}</span><h1>Daily tongue record</h1></div><div className="page-top-actions"><Link href="/hospital" className="doctor-page-link"><Building2 size={16} /><span>Doctor</span></Link><button className="icon-button" aria-label="Notifications"><Bell size={19} /></button></div></div>
               <section className={done.capture ? 'tongue-focus complete' : 'tongue-focus'}>
                 <div className="tongue-focus-top"><span className="focus-icon">{done.capture ? <CheckCircle2 size={30} /> : <ScanFace size={32} />}</span><span className="focus-status">{done.capture ? 'Completed today' : 'Best taken in the morning before eating'}</span></div>
                 <h2>{done.capture ? 'Today’s tongue record is ready' : 'Photograph your tongue and track daily changes'}</h2>
