@@ -31,6 +31,8 @@ import {
   Weight,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -50,6 +52,15 @@ type Patient = {
   reason: string;
   lastSync: string;
   completion: number;
+};
+
+type WorkspaceSection = 'overview' | 'patients' | 'review' | 'tasks';
+
+const sectionCopy: Record<WorkspaceSection, { breadcrumb: string; title: string; queueTitle: string; queueHint: string }> = {
+  overview: { breadcrumb: 'Hepatology / MASLD follow-up', title: 'Patient monitoring', queueTitle: 'Patient queue', queueHint: 'Priority view' },
+  patients: { breadcrumb: 'Clinical workspace / Patients', title: 'Patient list', queueTitle: 'All patients', queueHint: 'Search and open a record' },
+  review: { breadcrumb: 'Clinical workspace / Review queue', title: 'Review queue', queueTitle: 'Needs clinical review', queueHint: 'Prioritized by review flags' },
+  tasks: { breadcrumb: 'Clinical workspace / Follow-up tasks', title: 'Follow-up tasks', queueTitle: 'Incomplete follow-up', queueHint: 'Actions requiring attention' },
 };
 
 const patients: Patient[] = [
@@ -84,42 +95,66 @@ function Sparkline({ values, tone = 'green' }: { values: number[]; tone?: 'green
 }
 
 export default function HospitalDashboard() {
+  const [activeSection, setActiveSection] = useState<WorkspaceSection>('overview');
   const [selectedId, setSelectedId] = useState('MASLD-10482');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'All' | Patient['flag']>('All');
   const [reviewStatus, setReviewStatus] = useState<'Pending' | 'Reviewed' | 'Follow-up'>('Pending');
   const [note, setNote] = useState('');
   const [saved, setSaved] = useState(false);
+  const [utilityDialog, setUtilityDialog] = useState<'integration' | 'profile' | null>(null);
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'synced'>('idle');
+  const [lastSync, setLastSync] = useState('11 Sep, 10:42');
+  const [available, setAvailable] = useState(true);
   const selected = patients.find((patient) => patient.id === selectedId) ?? patients[0];
   const filteredPatients = useMemo(() => patients.filter((patient) => {
     const matchesQuery = `${patient.name} ${patient.id}`.toLowerCase().includes(query.toLowerCase());
     return matchesQuery && (filter === 'All' || patient.flag === filter);
   }), [filter, query]);
+  const currentSection = sectionCopy[activeSection];
+
+  const openSection = (section: WorkspaceSection) => {
+    setActiveSection(section);
+    setQuery('');
+    const nextFilter = section === 'review' ? 'Review' : section === 'tasks' ? 'Incomplete' : 'All';
+    setFilter(nextFilter);
+    const firstMatch = patients.find((patient) => nextFilter === 'All' || patient.flag === nextFilter);
+    if (firstMatch) setSelectedId(firstMatch.id);
+  };
+
+  const syncHospitalData = () => {
+    if (syncState === 'syncing') return;
+    setSyncState('syncing');
+    window.setTimeout(() => {
+      setSyncState('synced');
+      setLastSync('Just now');
+    }, 900);
+  };
 
   return (
     <main className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}><span><Activity size={20} /></span><div><strong>TongueCare</strong><small>Clinical workspace</small></div></div>
         <nav aria-label="Hospital navigation">
-          <button className={styles.navActive}><LayoutDashboard size={18} />Overview</button>
-          <button><UsersRound size={18} />Patient list<span>128</span></button>
-          <button><AlertTriangle size={18} />Review queue<span className={styles.alertCount}>4</span></button>
-          <button><FileClock size={18} />Follow-up tasks</button>
+          <button className={activeSection === 'overview' ? styles.navActive : ''} aria-current={activeSection === 'overview' ? 'page' : undefined} onClick={() => openSection('overview')}><LayoutDashboard size={18} />Overview</button>
+          <button className={activeSection === 'patients' ? styles.navActive : ''} aria-current={activeSection === 'patients' ? 'page' : undefined} onClick={() => openSection('patients')}><UsersRound size={18} />Patient list<span>128</span></button>
+          <button className={activeSection === 'review' ? styles.navActive : ''} aria-current={activeSection === 'review' ? 'page' : undefined} onClick={() => openSection('review')}><AlertTriangle size={18} />Review queue<span className={styles.alertCount}>4</span></button>
+          <button className={activeSection === 'tasks' ? styles.navActive : ''} aria-current={activeSection === 'tasks' ? 'page' : undefined} onClick={() => openSection('tasks')}><FileClock size={18} />Follow-up tasks</button>
         </nav>
         <div className={styles.integrationCard}>
           <div><Database size={17} /><span><strong>HIS / EMR API</strong><small>Read-only · Phase 1</small></span></div>
-          <p><i />Last sync 11 Sep, 10:42</p>
-          <button><RefreshCw size={14} />Sync status</button>
+          <p><i />{syncState === 'syncing' ? 'Syncing hospital data…' : `Last sync ${lastSync}`}</p>
+          <button onClick={syncHospitalData} disabled={syncState === 'syncing'}><RefreshCw size={14} className={syncState === 'syncing' ? styles.spinning : ''} />{syncState === 'syncing' ? 'Syncing…' : syncState === 'synced' ? 'Sync complete' : 'Sync status'}</button>
         </div>
         <div className={styles.sidebarBottom}>
-          <button><CircleHelp size={17} />Integration guide</button>
-          <div><span className={styles.doctorAvatar}>DW</span><span><strong>Dr. Wei</strong><small>Hepatology</small></span><ChevronRight size={15} /></div>
+          <button onClick={() => setUtilityDialog('integration')}><CircleHelp size={17} />Integration guide</button>
+          <button className={styles.doctorButton} onClick={() => setUtilityDialog('profile')}><span className={styles.doctorAvatar}>DW</span><span><strong>Dr. Wei</strong><small>Hepatology</small></span><ChevronRight size={15} /></button>
         </div>
       </aside>
 
       <section className={styles.workspace}>
         <header className={styles.topbar}>
-          <div><span className={styles.breadcrumb}>Hepatology / MASLD follow-up</span><h1>Patient monitoring</h1></div>
+          <div><span className={styles.breadcrumb}>{currentSection.breadcrumb}</span><h1>{currentSection.title}</h1></div>
           <div className={styles.topActions}>
             <Link href="/" className={styles.patientLink}><ArrowLeft size={15} />Patient demo</Link>
             <button className={styles.iconButton} aria-label="Notifications"><Bell size={18} /><i /></button>
@@ -137,7 +172,7 @@ export default function HospitalDashboard() {
         <div className={styles.mainGrid}>
           <section className={styles.queuePanel} aria-label="Patient review queue">
             <div className={styles.panelHeading}>
-              <div><h2>Patient queue</h2><span>{filteredPatients.length} of {patients.length} shown</span></div>
+              <div><h2>{currentSection.queueTitle}</h2><span>{filteredPatients.length} shown · {currentSection.queueHint}</span></div>
               <button aria-label="Queue settings"><SlidersHorizontal size={17} /></button>
             </div>
             <div className={styles.queueControls}>
@@ -304,6 +339,29 @@ export default function HospitalDashboard() {
           </section>
         </div>
       </section>
+
+      <Dialog open={utilityDialog === 'integration'} onOpenChange={(open) => !open && setUtilityDialog(null)}>
+        <DialogContent className={styles.utilityDialog}>
+          <DialogTitle>HIS / EMR integration guide</DialogTitle>
+          <DialogDescription>Read-only data exchange for the Phase 1 clinical prototype.</DialogDescription>
+          <div className={styles.guideSteps}>
+            <article><span>1</span><div><strong>Patient matching</strong><p>Use the hospital ID to match TongueCare records with the correct patient chart.</p></div></article>
+            <article><span>2</span><div><strong>Read-only clinical data</strong><p>Import approved laboratory values and appointment information without modifying the EMR.</p></div></article>
+            <article><span>3</span><div><strong>Clinician confirmation</strong><p>Review and confirm summaries before information is referenced in clinical workflow.</p></div></article>
+          </div>
+          <div className={styles.dialogStatus}><Database size={18} /><span><strong>Connection status</strong><small>Sandbox connected · Last sync {lastSync}</small></span></div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={utilityDialog === 'profile'} onOpenChange={(open) => !open && setUtilityDialog(null)}>
+        <DialogContent className={styles.utilityDialog}>
+          <DialogTitle>Dr. Wei</DialogTitle>
+          <DialogDescription>Hepatology clinical workspace profile.</DialogDescription>
+          <div className={styles.profileCard}><span className={styles.profileAvatar}>DW</span><div><strong>Dr. Wei</strong><small>Consultant · Hepatology</small><em>Clinical reviewer</em></div></div>
+          <div className={styles.profileSetting}><span><strong>Available for review</strong><small>Show availability to the care team</small></span><Switch checked={available} onCheckedChange={setAvailable} /></div>
+          <div className={styles.profileMeta}><span><small>Current service</small><strong>MASLD follow-up</strong></span><span><small>Assigned reviews</small><strong>4 pending</strong></span></div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
