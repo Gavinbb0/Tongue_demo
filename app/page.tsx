@@ -186,14 +186,20 @@ export default function Page() {
 
             <TabsContent value="reports" className="page">
               <div className="page-top"><div><span className="eyebrow">Record review</span><h1>Tongue health reports</h1></div><BarChart3 size={23} /></div>
-              <div className="section-heading doctor-report-heading"><h2>From your care team</h2><span>1 new report</span></div>
-              <button className="doctor-report-card" onClick={() => setReportName('doctor')}>
+              <div className="section-heading doctor-report-heading"><h2>From your care team</h2><span>{isVip ? '1 new report' : 'Premium'}</span></div>
+              {isVip ? <button className="doctor-report-card" onClick={() => setReportName('doctor')}>
                 <div className="doctor-report-top"><span className="doctor-report-icon"><Stethoscope size={22} /></span><span className="doctor-report-status">New</span></div>
                 <small>18 Aug 2026 · Dr. Wei, Hepatology</small>
                 <strong>Post-visit report</strong>
                 <p>Consultation summary, agreed follow-up plan, and next appointment.</p>
                 <span className="doctor-report-action">View doctor’s report<ChevronRight size={17} /></span>
-              </button>
+              </button> : <button className="doctor-report-card doctor-report-locked" onClick={() => setPlan('vip')}>
+                <div className="doctor-report-top"><span className="doctor-report-icon"><LockKeyhole size={21} /></span><span className="doctor-report-status">Premium</span></div>
+                <small>Member-only care feature</small>
+                <strong>Doctor post-visit reports</strong>
+                <p>Premium members can view clinician-written consultation summaries and follow-up plans.</p>
+                <span className="doctor-report-action">Switch to Premium preview<ChevronRight size={17} /></span>
+              </button>}
               <div className="section-heading patient-report-heading"><h2>Your health reports</h2><span>Latest record</span></div>
               <button className="report-overview" onClick={() => setReportName('single')}>
                 <div className="overview-top"><span className="overview-icon"><ScanFace size={25} /></span><span className="overview-plan">{isVip ? 'Premium detailed report' : 'Basic health report'}</span></div>
